@@ -42,3 +42,5 @@ jobs:
       - run: pnpm --filter @fenac-platform/api exec prisma migrate deploy
 
       - run: pnpm turbo run lint test build
+
+      - run: pnpm --filter @fenac-platform/api run test:e2e
