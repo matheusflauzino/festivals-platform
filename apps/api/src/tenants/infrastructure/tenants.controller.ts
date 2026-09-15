@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, NotFoundException, Param, Post, UsePipes } from '@nestjs/common';
-import { createTenantSchema, CreateTenantDto } from '@fenac-platform/contracts';
+import { createTenantSchema } from '@fenac-platform/contracts';
+import type { CreateTenantDto } from '@fenac-platform/contracts';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CreateTenantUseCase } from '../application/use-cases/create-tenant.use-case';
 import { FindTenantBySlugUseCase } from '../application/use-cases/find-tenant-by-slug.use-case';

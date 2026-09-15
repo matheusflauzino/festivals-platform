@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Tenant, CreateTenantInput } from '../../domain/tenant.entity';
-import { TENANTS_REPOSITORY, TenantsRepositoryPort } from '../ports/tenants-repository.port';
+import { TENANTS_REPOSITORY } from '../ports/tenants-repository.port';
+import type { TenantsRepositoryPort } from '../ports/tenants-repository.port';
 
 @Injectable()
 export class CreateTenantUseCase {

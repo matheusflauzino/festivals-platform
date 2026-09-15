@@ -1,2 +1,2 @@
-export { createTenantSchema } from './tenant.schema';
-export type { CreateTenantDto } from './tenant.schema';
+export { createTenantSchema } from './tenant.schema.js';
+export type { CreateTenantDto } from './tenant.schema.js';
