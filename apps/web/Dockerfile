@@ -20,6 +20,7 @@ COPY --from=build /repo/apps/web/.next ./apps/web/.next
 COPY --from=build /repo/apps/web/node_modules ./apps/web/node_modules
 COPY --from=build /repo/apps/web/public ./apps/web/public
 COPY --from=build /repo/apps/web/package.json ./apps/web/package.json
+COPY --from=build /repo/apps/web/next.config.ts ./apps/web/next.config.ts
 WORKDIR /repo/apps/web
 EXPOSE 3000
 CMD ["node_modules/.bin/next", "start"]

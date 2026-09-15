@@ -25,4 +25,9 @@ COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /repo/apps/api/prisma ./apps/api/prisma
 WORKDIR /repo/apps/api
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+# Apply pending Prisma migrations before starting the server, so a fresh
+# mysql_data volume gets its schema created automatically on first boot
+# instead of requiring a migration to be run by hand out-of-band. The
+# `prisma` CLI (a devDependency, not just @prisma/client) is present here
+# because the runtime stage copies apps/api/node_modules unpruned.
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/main.js"]
