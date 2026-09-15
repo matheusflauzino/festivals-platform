@@ -12,4 +12,11 @@ export class InMemoryTenantsRepository implements TenantsRepositoryPort {
   findBySlug(slug: string): Promise<Tenant | null> {
     return Promise.resolve(this.tenants.get(slug) ?? null);
   }
+
+  async findById(id: string): Promise<Tenant | null> {
+    for (const tenant of this.tenants.values()) {
+      if (tenant.id === id) return tenant;
+    }
+    return null;
+  }
 }

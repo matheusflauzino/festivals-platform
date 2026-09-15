@@ -14,7 +14,7 @@ describe('PrismaTenantsRepository (integration)', () => {
   });
 
   afterEach(async () => {
-    await prisma.tenant.deleteMany({ where: { slug: testSlug } });
+    await prisma.tenant.deleteMany({ where: { slug: { in: [testSlug, 'find-by-id-tenant'] } } });
   });
 
   afterAll(async () => {
@@ -39,5 +39,19 @@ describe('PrismaTenantsRepository (integration)', () => {
   it('returns null when no tenant matches the slug', async () => {
     const found = await repository.findBySlug('does-not-exist');
     expect(found).toBeNull();
+  });
+
+  it('finds a tenant back by id', async () => {
+    const tenant = Tenant.create({
+      name: 'Find By Id Tenant',
+      document: 'CD123456789012',
+      slug: 'find-by-id-tenant',
+    });
+    await repository.save(tenant);
+
+    const found = await repository.findById(tenant.id);
+
+    expect(found).not.toBeNull();
+    expect(found?.slug).toBe('find-by-id-tenant');
   });
 });
