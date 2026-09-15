@@ -30,4 +30,4 @@ EXPOSE 3000
 # instead of requiring a migration to be run by hand out-of-band. The
 # `prisma` CLI (a devDependency, not just @prisma/client) is present here
 # because the runtime stage copies apps/api/node_modules unpruned.
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/main.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && exec node dist/main.js"]
