@@ -64,4 +64,16 @@ describe('TenantsController (e2e)', () => {
       .get('/tenants/does-not-exist')
       .expect(404);
   });
+
+  it('returns 409 when the slug is already taken', async () => {
+    await request(app.getHttpServer())
+      .post('/tenants')
+      .send({ name: 'E2E Test Tenant', document: 'AB123456789012', slug })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/tenants')
+      .send({ name: 'Another Tenant', document: 'CD123456789012', slug })
+      .expect(409);
+  });
 });

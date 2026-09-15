@@ -6,15 +6,18 @@ import {
   NotFoundException,
   Param,
   Post,
+  UseFilters,
   UsePipes,
 } from '@nestjs/common';
 import { createTenantSchema } from '@fenac-platform/contracts';
 import type { CreateTenantDto } from '@fenac-platform/contracts';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { TenantConflictExceptionFilter } from '../../common/filters/tenant-conflict.filter';
 import { CreateTenantUseCase } from '../application/use-cases/create-tenant.use-case';
 import { FindTenantBySlugUseCase } from '../application/use-cases/find-tenant-by-slug.use-case';
 
 @Controller('tenants')
+@UseFilters(TenantConflictExceptionFilter)
 export class TenantsController {
   constructor(
     private readonly createTenant: CreateTenantUseCase,

@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Tenant, CreateTenantInput } from '../../domain/tenant.entity';
+import { TenantConflictError } from '../../domain/tenant-conflict.error';
 import { TENANTS_REPOSITORY } from '../ports/tenants-repository.port';
 import type { TenantsRepositoryPort } from '../ports/tenants-repository.port';
 
@@ -13,7 +14,7 @@ export class CreateTenantUseCase {
   async execute(input: CreateTenantInput): Promise<Tenant> {
     const existing = await this.tenantsRepository.findBySlug(input.slug);
     if (existing) {
-      throw new Error('slug already taken');
+      throw new TenantConflictError('slug', input.slug);
     }
 
     const tenant = Tenant.create(input);

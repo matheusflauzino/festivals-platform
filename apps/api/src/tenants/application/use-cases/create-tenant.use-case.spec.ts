@@ -1,5 +1,6 @@
 import { CreateTenantUseCase } from './create-tenant.use-case';
 import { InMemoryTenantsRepository } from '../../infrastructure/in-memory-tenants.repository';
+import { TenantConflictError } from '../../domain/tenant-conflict.error';
 
 describe('CreateTenantUseCase', () => {
   it('creates and persists a tenant', async () => {
@@ -32,6 +33,6 @@ describe('CreateTenantUseCase', () => {
         document: 'CD123456789012',
         slug: 'fenac',
       }),
-    ).rejects.toThrow('slug already taken');
+    ).rejects.toThrow(TenantConflictError);
   });
 });
