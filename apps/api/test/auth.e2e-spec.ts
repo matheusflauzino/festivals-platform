@@ -10,6 +10,7 @@ describe('AuthController (e2e)', () => {
   let prisma: PrismaService;
   const tenantSlug = 'auth-e2e-tenant';
   const userEmail = 'auth-e2e-user@example.com';
+  const secondUserEmail = 'auth-e2e-second-user@example.com';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -33,7 +34,9 @@ describe('AuthController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await prisma.user.deleteMany({ where: { email: userEmail } });
+    await prisma.user.deleteMany({
+      where: { email: { in: [userEmail, secondUserEmail] } },
+    });
   });
 
   afterAll(async () => {
@@ -117,5 +120,43 @@ describe('AuthController (e2e)', () => {
     await request(app.getHttpServer())
       .get(`/tenants/${tenantSlug}/auth/me`)
       .expect(401);
+  });
+
+  it('returns each participant their own data on /me, not another user\'s', async () => {
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/register`)
+      .send({ name: 'Ana Silva', email: userEmail, cpf: '12345678901', password: 'a-strong-password' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/register`)
+      .send({ name: 'Bruno Costa', email: secondUserEmail, cpf: '98765432100', password: 'another-strong-password' })
+      .expect(201);
+
+    const firstLogin = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/login`)
+      .send({ identifier: userEmail, password: 'a-strong-password' })
+      .expect(200);
+    const secondLogin = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/login`)
+      .send({ identifier: secondUserEmail, password: 'another-strong-password' })
+      .expect(200);
+
+    const firstAccessToken = firstLogin.body.accessToken as string;
+    const secondAccessToken = secondLogin.body.accessToken as string;
+
+    const firstMeResponse = await request(app.getHttpServer())
+      .get(`/tenants/${tenantSlug}/auth/me`)
+      .set('Authorization', `Bearer ${firstAccessToken}`)
+      .expect(200);
+    const secondMeResponse = await request(app.getHttpServer())
+      .get(`/tenants/${tenantSlug}/auth/me`)
+      .set('Authorization', `Bearer ${secondAccessToken}`)
+      .expect(200);
+
+    expect(firstMeResponse.body.email).toBe(userEmail);
+    expect(firstMeResponse.body.name).toBe('Ana Silva');
+    expect(secondMeResponse.body.email).toBe(secondUserEmail);
+    expect(secondMeResponse.body.name).toBe('Bruno Costa');
+    expect(firstMeResponse.body.id).not.toBe(secondMeResponse.body.id);
   });
 });
