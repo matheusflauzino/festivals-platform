@@ -11,6 +11,9 @@
   "engines": {
     "node": ">=22"
   },
+  "prisma": {
+    "schema": "apps/api/prisma/schema.prisma"
+  },
   "devDependencies": {
     "turbo": "^2.10.13"
   }
