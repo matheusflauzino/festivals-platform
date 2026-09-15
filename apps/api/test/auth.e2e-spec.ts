@@ -1,0 +1,96 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
+import request from 'supertest';
+import { AppModule } from './../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
+
+describe('AuthController (e2e)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  const tenantSlug = 'auth-e2e-tenant';
+  const userEmail = 'auth-e2e-user@example.com';
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
+    await app.init();
+    prisma = app.get(PrismaService);
+
+    await prisma.tenant.create({
+      data: {
+        id: 'auth-e2e-tenant-id',
+        name: 'Auth E2E Tenant',
+        document: 'AE123456789012',
+        slug: tenantSlug,
+        status: 'ACTIVE',
+      },
+    });
+  });
+
+  afterEach(async () => {
+    await prisma.user.deleteMany({ where: { email: userEmail } });
+  });
+
+  afterAll(async () => {
+    await prisma.tenant.deleteMany({ where: { slug: tenantSlug } });
+    await app.close();
+  });
+
+  it('registers, logs in, and refreshes an access token', async () => {
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/register`)
+      .send({
+        name: 'Ana Silva',
+        email: userEmail,
+        cpf: '12345678901',
+        password: 'a-strong-password',
+      })
+      .expect(201);
+
+    const loginResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/login`)
+      .send({ identifier: userEmail, password: 'a-strong-password' })
+      .expect(200);
+
+    expect(loginResponse.body.accessToken).toBeDefined();
+    expect(loginResponse.body.user.email).toBe(userEmail);
+    const setCookieHeader = loginResponse.headers['set-cookie'];
+    expect(setCookieHeader[0]).toContain('refreshToken=');
+
+    const refreshResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/refresh`)
+      .set('Cookie', setCookieHeader)
+      .expect(200);
+
+    expect(refreshResponse.body.accessToken).toBeDefined();
+  });
+
+  it('returns 401 for a login with the wrong password', async () => {
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/register`)
+      .send({
+        name: 'Ana Silva',
+        email: userEmail,
+        cpf: '12345678901',
+        password: 'a-strong-password',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/login`)
+      .send({ identifier: userEmail, password: 'wrong-password' })
+      .expect(401);
+  });
+
+  it('returns 404 when the tenant slug does not exist', async () => {
+    await request(app.getHttpServer())
+      .post('/tenants/does-not-exist/auth/login')
+      .send({ identifier: userEmail, password: 'anything' })
+      .expect(404);
+  });
+});

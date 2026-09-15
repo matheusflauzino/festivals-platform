@@ -12,5 +12,6 @@ import { FindTenantBySlugUseCase } from './application/use-cases/find-tenant-by-
     FindTenantBySlugUseCase,
     { provide: TENANTS_REPOSITORY, useClass: PrismaTenantsRepository },
   ],
+  exports: [FindTenantBySlugUseCase],
 })
 export class TenantsModule {}
