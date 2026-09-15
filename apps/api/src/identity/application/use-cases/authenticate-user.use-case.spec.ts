@@ -4,11 +4,11 @@ import { InMemoryUsersRepository } from '../../infrastructure/in-memory-users.re
 import { PasswordHasherPort } from '../ports/password-hasher.port';
 
 class FakePasswordHasher implements PasswordHasherPort {
-  async hash(plain: string): Promise<string> {
-    return `hashed:${plain}`;
+  hash(plain: string): Promise<string> {
+    return Promise.resolve(`hashed:${plain}`);
   }
-  async compare(plain: string, hash: string): Promise<boolean> {
-    return hash === `hashed:${plain}`;
+  compare(plain: string, hash: string): Promise<boolean> {
+    return Promise.resolve(hash === `hashed:${plain}`);
   }
 }
 

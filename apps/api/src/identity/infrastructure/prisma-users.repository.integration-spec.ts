@@ -36,7 +36,10 @@ describe('PrismaUsersRepository (integration)', () => {
     const foundByEmail = await repository.findByEmailOrCpf(tenantId, email);
     expect(foundByEmail?.id).toBe(user.id);
 
-    const foundByCpf = await repository.findByEmailOrCpf(tenantId, '98765432100');
+    const foundByCpf = await repository.findByEmailOrCpf(
+      tenantId,
+      '98765432100',
+    );
     expect(foundByCpf?.id).toBe(user.id);
 
     const foundById = await repository.findById(user.id);

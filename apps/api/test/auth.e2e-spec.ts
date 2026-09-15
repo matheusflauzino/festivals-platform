@@ -5,6 +5,27 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 
+interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface LoginResponseBody {
+  accessToken: string;
+  user: AuthUser;
+}
+
+interface RefreshResponseBody {
+  accessToken: string;
+}
+
+interface MeResponseBody {
+  id: string;
+  name: string;
+  email: string;
+}
+
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -60,8 +81,9 @@ describe('AuthController (e2e)', () => {
       .send({ identifier: userEmail, password: 'a-strong-password' })
       .expect(200);
 
-    expect(loginResponse.body.accessToken).toBeDefined();
-    expect(loginResponse.body.user.email).toBe(userEmail);
+    const loginBody = loginResponse.body as LoginResponseBody;
+    expect(loginBody.accessToken).toBeDefined();
+    expect(loginBody.user.email).toBe(userEmail);
     const setCookieHeader = loginResponse.headers['set-cookie'];
     expect(setCookieHeader[0]).toContain('refreshToken=');
 
@@ -70,7 +92,8 @@ describe('AuthController (e2e)', () => {
       .set('Cookie', setCookieHeader)
       .expect(200);
 
-    expect(refreshResponse.body.accessToken).toBeDefined();
+    const refreshBody = refreshResponse.body as RefreshResponseBody;
+    expect(refreshBody.accessToken).toBeDefined();
   });
 
   it('returns 401 for a login with the wrong password', async () => {
@@ -100,7 +123,12 @@ describe('AuthController (e2e)', () => {
   it('returns the authenticated participant on /me, and 401 without a token', async () => {
     await request(app.getHttpServer())
       .post(`/tenants/${tenantSlug}/auth/register`)
-      .send({ name: 'Ana Silva', email: userEmail, cpf: '12345678901', password: 'a-strong-password' })
+      .send({
+        name: 'Ana Silva',
+        email: userEmail,
+        cpf: '12345678901',
+        password: 'a-strong-password',
+      })
       .expect(201);
 
     const loginResponse = await request(app.getHttpServer())
@@ -108,28 +136,39 @@ describe('AuthController (e2e)', () => {
       .send({ identifier: userEmail, password: 'a-strong-password' })
       .expect(200);
 
-    const accessToken = loginResponse.body.accessToken as string;
+    const accessToken = (loginResponse.body as LoginResponseBody).accessToken;
 
     const meResponse = await request(app.getHttpServer())
       .get(`/tenants/${tenantSlug}/auth/me`)
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
-    expect(meResponse.body.email).toBe(userEmail);
+    const meBody = meResponse.body as MeResponseBody;
+    expect(meBody.email).toBe(userEmail);
 
     await request(app.getHttpServer())
       .get(`/tenants/${tenantSlug}/auth/me`)
       .expect(401);
   });
 
-  it('returns each participant their own data on /me, not another user\'s', async () => {
+  it("returns each participant their own data on /me, not another user's", async () => {
     await request(app.getHttpServer())
       .post(`/tenants/${tenantSlug}/auth/register`)
-      .send({ name: 'Ana Silva', email: userEmail, cpf: '12345678901', password: 'a-strong-password' })
+      .send({
+        name: 'Ana Silva',
+        email: userEmail,
+        cpf: '12345678901',
+        password: 'a-strong-password',
+      })
       .expect(201);
     await request(app.getHttpServer())
       .post(`/tenants/${tenantSlug}/auth/register`)
-      .send({ name: 'Bruno Costa', email: secondUserEmail, cpf: '98765432100', password: 'another-strong-password' })
+      .send({
+        name: 'Bruno Costa',
+        email: secondUserEmail,
+        cpf: '98765432100',
+        password: 'another-strong-password',
+      })
       .expect(201);
 
     const firstLogin = await request(app.getHttpServer())
@@ -138,11 +177,15 @@ describe('AuthController (e2e)', () => {
       .expect(200);
     const secondLogin = await request(app.getHttpServer())
       .post(`/tenants/${tenantSlug}/auth/login`)
-      .send({ identifier: secondUserEmail, password: 'another-strong-password' })
+      .send({
+        identifier: secondUserEmail,
+        password: 'another-strong-password',
+      })
       .expect(200);
 
-    const firstAccessToken = firstLogin.body.accessToken as string;
-    const secondAccessToken = secondLogin.body.accessToken as string;
+    const firstAccessToken = (firstLogin.body as LoginResponseBody).accessToken;
+    const secondAccessToken = (secondLogin.body as LoginResponseBody)
+      .accessToken;
 
     const firstMeResponse = await request(app.getHttpServer())
       .get(`/tenants/${tenantSlug}/auth/me`)
@@ -153,10 +196,12 @@ describe('AuthController (e2e)', () => {
       .set('Authorization', `Bearer ${secondAccessToken}`)
       .expect(200);
 
-    expect(firstMeResponse.body.email).toBe(userEmail);
-    expect(firstMeResponse.body.name).toBe('Ana Silva');
-    expect(secondMeResponse.body.email).toBe(secondUserEmail);
-    expect(secondMeResponse.body.name).toBe('Bruno Costa');
-    expect(firstMeResponse.body.id).not.toBe(secondMeResponse.body.id);
+    const firstMeBody = firstMeResponse.body as MeResponseBody;
+    const secondMeBody = secondMeResponse.body as MeResponseBody;
+    expect(firstMeBody.email).toBe(userEmail);
+    expect(firstMeBody.name).toBe('Ana Silva');
+    expect(secondMeBody.email).toBe(secondUserEmail);
+    expect(secondMeBody.name).toBe('Bruno Costa');
+    expect(firstMeBody.id).not.toBe(secondMeBody.id);
   });
 });

@@ -28,7 +28,10 @@ export class PrismaUsersRepository implements UsersRepositoryPort {
     });
   }
 
-  async findByEmailOrCpf(tenantId: string, identifier: string): Promise<User | null> {
+  async findByEmailOrCpf(
+    tenantId: string,
+    identifier: string,
+  ): Promise<User | null> {
     const row = await this.prisma.user.findFirst({
       where: {
         tenantId,

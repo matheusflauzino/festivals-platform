@@ -5,9 +5,9 @@ describe('BcryptPasswordHasher', () => {
 
   it('hashes a password and verifies it matches', async () => {
     const hash = await hasher.hash('correct horse battery staple');
-    await expect(hasher.compare('correct horse battery staple', hash)).resolves.toBe(
-      true,
-    );
+    await expect(
+      hasher.compare('correct horse battery staple', hash),
+    ).resolves.toBe(true);
   });
 
   it('rejects the wrong password', async () => {

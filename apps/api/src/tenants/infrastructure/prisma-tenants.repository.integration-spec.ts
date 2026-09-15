@@ -14,7 +14,9 @@ describe('PrismaTenantsRepository (integration)', () => {
   });
 
   afterEach(async () => {
-    await prisma.tenant.deleteMany({ where: { slug: { in: [testSlug, 'find-by-id-tenant'] } } });
+    await prisma.tenant.deleteMany({
+      where: { slug: { in: [testSlug, 'find-by-id-tenant'] } },
+    });
   });
 
   afterAll(async () => {
