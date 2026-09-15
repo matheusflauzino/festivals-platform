@@ -93,4 +93,29 @@ describe('AuthController (e2e)', () => {
       .send({ identifier: userEmail, password: 'anything' })
       .expect(404);
   });
+
+  it('returns the authenticated participant on /me, and 401 without a token', async () => {
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/register`)
+      .send({ name: 'Ana Silva', email: userEmail, cpf: '12345678901', password: 'a-strong-password' })
+      .expect(201);
+
+    const loginResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/login`)
+      .send({ identifier: userEmail, password: 'a-strong-password' })
+      .expect(200);
+
+    const accessToken = loginResponse.body.accessToken as string;
+
+    const meResponse = await request(app.getHttpServer())
+      .get(`/tenants/${tenantSlug}/auth/me`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(meResponse.body.email).toBe(userEmail);
+
+    await request(app.getHttpServer())
+      .get(`/tenants/${tenantSlug}/auth/me`)
+      .expect(401);
+  });
 });

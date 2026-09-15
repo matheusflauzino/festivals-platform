@@ -1,14 +1,19 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
+  Inject,
   NotFoundException,
   Param,
   Post,
+  Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import type { Request } from 'express';
 import {
   registerParticipantSchema,
   loginParticipantSchema,
@@ -23,6 +28,9 @@ import { RegisterUserUseCase } from '../application/use-cases/register-user.use-
 import { AuthenticateUserUseCase } from '../application/use-cases/authenticate-user.use-case';
 import type { User } from '../domain/user.entity';
 import { ParticipantTokenService } from './participant-token.service';
+import { ParticipantAuthGuard } from './participant-auth.guard';
+import { USERS_REPOSITORY } from '../application/ports/users-repository.port';
+import type { UsersRepositoryPort } from '../application/ports/users-repository.port';
 
 const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -33,6 +41,8 @@ export class AuthController {
     private readonly registerUser: RegisterUserUseCase,
     private readonly authenticateUser: AuthenticateUserUseCase,
     private readonly tokenService: ParticipantTokenService,
+    @Inject(USERS_REPOSITORY)
+    private readonly usersRepository: UsersRepositoryPort,
   ) {}
 
   @Post('register')
@@ -106,6 +116,14 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     return this.doRefresh(response);
+  }
+
+  @Get('me')
+  @UseGuards(ParticipantAuthGuard)
+  async me(@Req() request: Request & { participant?: { id: string } }) {
+    const user = await this.usersRepository.findById(request.participant!.id);
+    if (!user) throw new NotFoundException();
+    return { id: user.id, name: user.name, email: user.email };
   }
 
   private doRefresh(response: Response) {
