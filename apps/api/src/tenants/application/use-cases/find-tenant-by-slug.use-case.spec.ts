@@ -5,7 +5,11 @@ import { Tenant } from '../../domain/tenant.entity';
 describe('FindTenantBySlugUseCase', () => {
   it('returns the tenant when found', async () => {
     const repository = new InMemoryTenantsRepository();
-    const tenant = Tenant.create({ name: 'FENAC', document: 'AB123456789012', slug: 'fenac' });
+    const tenant = Tenant.create({
+      name: 'FENAC',
+      document: 'AB123456789012',
+      slug: 'fenac',
+    });
     await repository.save(tenant);
 
     const useCase = new FindTenantBySlugUseCase(repository);

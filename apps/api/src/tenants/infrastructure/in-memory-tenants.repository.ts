@@ -4,11 +4,12 @@ import { TenantsRepositoryPort } from '../application/ports/tenants-repository.p
 export class InMemoryTenantsRepository implements TenantsRepositoryPort {
   private readonly tenants = new Map<string, Tenant>();
 
-  async save(tenant: Tenant): Promise<void> {
+  save(tenant: Tenant): Promise<void> {
     this.tenants.set(tenant.slug, tenant);
+    return Promise.resolve();
   }
 
-  async findBySlug(slug: string): Promise<Tenant | null> {
-    return this.tenants.get(slug) ?? null;
+  findBySlug(slug: string): Promise<Tenant | null> {
+    return Promise.resolve(this.tenants.get(slug) ?? null);
   }
 }

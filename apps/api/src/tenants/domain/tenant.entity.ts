@@ -28,7 +28,9 @@ export class Tenant {
       throw new Error('document must be 14 alphanumeric characters');
     }
     if (!SLUG_PATTERN.test(input.slug)) {
-      throw new Error('slug must be lowercase letters, numbers and hyphens only');
+      throw new Error(
+        'slug must be lowercase letters, numbers and hyphens only',
+      );
     }
 
     return new Tenant({

@@ -1,4 +1,13 @@
-import { Body, Controller, Get, HttpCode, NotFoundException, Param, Post, UsePipes } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  NotFoundException,
+  Param,
+  Post,
+  UsePipes,
+} from '@nestjs/common';
 import { createTenantSchema } from '@fenac-platform/contracts';
 import type { CreateTenantDto } from '@fenac-platform/contracts';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';

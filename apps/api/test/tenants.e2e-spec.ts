@@ -4,6 +4,14 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 
+interface TenantResponseBody {
+  id: string;
+  name: string;
+  document: string;
+  slug: string;
+  status: string;
+}
+
 describe('TenantsController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -32,14 +40,16 @@ describe('TenantsController (e2e)', () => {
       .post('/tenants')
       .send({ name: 'E2E Test Tenant', document: 'AB123456789012', slug })
       .expect(201);
+    const createBody = createResponse.body as TenantResponseBody;
 
-    expect(createResponse.body.slug).toBe(slug);
+    expect(createBody.slug).toBe(slug);
 
     const getResponse = await request(app.getHttpServer())
       .get(`/tenants/${slug}`)
       .expect(200);
+    const getBody = getResponse.body as TenantResponseBody;
 
-    expect(getResponse.body.id).toBe(createResponse.body.id);
+    expect(getBody.id).toBe(createBody.id);
   });
 
   it('returns 400 for an invalid payload', async () => {
@@ -50,6 +60,8 @@ describe('TenantsController (e2e)', () => {
   });
 
   it('returns 404 for an unknown slug', async () => {
-    await request(app.getHttpServer()).get('/tenants/does-not-exist').expect(404);
+    await request(app.getHttpServer())
+      .get('/tenants/does-not-exist')
+      .expect(404);
   });
 });

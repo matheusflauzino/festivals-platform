@@ -20,10 +20,18 @@ describe('CreateTenantUseCase', () => {
     const repository = new InMemoryTenantsRepository();
     const useCase = new CreateTenantUseCase(repository);
 
-    await useCase.execute({ name: 'FENAC', document: 'AB123456789012', slug: 'fenac' });
+    await useCase.execute({
+      name: 'FENAC',
+      document: 'AB123456789012',
+      slug: 'fenac',
+    });
 
     await expect(
-      useCase.execute({ name: 'Outro', document: 'CD123456789012', slug: 'fenac' }),
+      useCase.execute({
+        name: 'Outro',
+        document: 'CD123456789012',
+        slug: 'fenac',
+      }),
     ).rejects.toThrow('slug already taken');
   });
 });
