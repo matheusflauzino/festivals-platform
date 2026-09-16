@@ -13,6 +13,11 @@ interface LoginResponseBody {
 interface FestivalResponseBody {
   id: string;
   status: string;
+  allowedStates?: string[];
+  votingBegin?: string | null;
+  votingEnd?: string | null;
+  regulationUrl?: string | null;
+  inscriptionFee?: number;
 }
 
 describe('FestivalsController (e2e)', () => {
@@ -118,6 +123,9 @@ describe('FestivalsController (e2e)', () => {
         registrationEnd: '2026-03-01T18:00:00.000Z',
         inscriptionFee: 25,
         allowedStates: ['MG'],
+        votingBegin: '2026-02-01T08:00:00.000Z',
+        votingEnd: '2026-02-15T08:00:00.000Z',
+        regulationUrl: 'https://example.com/regulation.pdf',
       })
       .expect(201);
     const festival = createResponse.body as FestivalResponseBody;
@@ -134,7 +142,10 @@ describe('FestivalsController (e2e)', () => {
       .expect(200);
     expect(listResponse.body as FestivalResponseBody[]).toHaveLength(1);
 
-    await request(app.getHttpServer())
+    // PATCH intentionally omits allowedStates/votingBegin/votingEnd/regulationUrl.
+    // A true partial-update means the omitted fields must be left unchanged,
+    // not silently wiped to [] / null (see Fix 2 in the final fix-wave report).
+    const patchResponse = await request(app.getHttpServer())
       .patch(`/tenants/${tenantSlug}/festivals/${festival.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({
@@ -144,6 +155,45 @@ describe('FestivalsController (e2e)', () => {
         inscriptionFee: 30,
       })
       .expect(200);
+    const patched = patchResponse.body as FestivalResponseBody;
+    expect(patched.allowedStates).toEqual(['MG']);
+    expect(patched.votingBegin).toBe('2026-02-01T08:00:00.000Z');
+    expect(patched.votingEnd).toBe('2026-02-15T08:00:00.000Z');
+    expect(patched.regulationUrl).toBe('https://example.com/regulation.pdf');
+    expect(patched.inscriptionFee).toBe(30);
+
+    const getAfterPatchResponse = await request(app.getHttpServer())
+      .get(`/tenants/${tenantSlug}/festivals/${festival.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    const getAfterPatch = getAfterPatchResponse.body as FestivalResponseBody;
+    expect(getAfterPatch.allowedStates).toEqual(['MG']);
+    expect(getAfterPatch.votingBegin).toBe('2026-02-01T08:00:00.000Z');
+    expect(getAfterPatch.votingEnd).toBe('2026-02-15T08:00:00.000Z');
+    expect(getAfterPatch.regulationUrl).toBe(
+      'https://example.com/regulation.pdf',
+    );
+
+    // An explicit null DOES clear a field (as opposed to omitting the key).
+    const clearResponse = await request(app.getHttpServer())
+      .patch(`/tenants/${tenantSlug}/festivals/${festival.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'FENAC 2026 — Revisado',
+        registrationBegin: '2026-01-01T08:00:00.000Z',
+        registrationEnd: '2026-03-01T18:00:00.000Z',
+        inscriptionFee: 30,
+        votingBegin: null,
+        votingEnd: null,
+        regulationUrl: null,
+        allowedStates: [],
+      })
+      .expect(200);
+    const cleared = clearResponse.body as FestivalResponseBody;
+    expect(cleared.votingBegin).toBeNull();
+    expect(cleared.votingEnd).toBeNull();
+    expect(cleared.regulationUrl).toBeNull();
+    expect(cleared.allowedStates).toEqual([]);
 
     await request(app.getHttpServer())
       .post(`/tenants/${tenantSlug}/festivals/${festival.id}/publish`)
@@ -179,6 +229,18 @@ describe('FestivalsController (e2e)', () => {
       .post(`/tenants/${tenantSlug}/festivals/${festival.id}/close`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
+
+    // A CLOSED festival must not be editable (Fix 4).
+    await request(app.getHttpServer())
+      .patch(`/tenants/${tenantSlug}/festivals/${festival.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Should Not Update',
+        registrationBegin: '2026-01-01T08:00:00.000Z',
+        registrationEnd: '2026-03-01T18:00:00.000Z',
+        inscriptionFee: 99,
+      })
+      .expect(409);
   });
 
   it('rejects creating a festival with no auth token', async () => {
@@ -244,6 +306,142 @@ describe('FestivalsController (e2e)', () => {
         inscriptionFee: 25,
       })
       .expect(409);
+  });
+
+  it('returns 400, not 500, when registrationBegin is not before registrationEnd', async () => {
+    const token = await loginAs(tenantSlug, organizerEmail);
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        number: 70,
+        year: 2030,
+        name: 'FENAC 2030',
+        registrationBegin: '2030-03-01T18:00:00.000Z',
+        registrationEnd: '2030-01-01T08:00:00.000Z',
+        inscriptionFee: 25,
+      })
+      .expect(400);
+  });
+
+  it('returns 400, not 500, when votingBegin is set without votingEnd', async () => {
+    const token = await loginAs(tenantSlug, organizerEmail);
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        number: 71,
+        year: 2030,
+        name: 'FENAC 2030 Voting',
+        registrationBegin: '2030-01-01T08:00:00.000Z',
+        registrationEnd: '2030-03-01T18:00:00.000Z',
+        inscriptionFee: 25,
+        votingBegin: '2030-02-01T08:00:00.000Z',
+      })
+      .expect(400);
+  });
+
+  it('returns 400, not 500, when name is whitespace-only', async () => {
+    const token = await loginAs(tenantSlug, organizerEmail);
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        number: 72,
+        year: 2030,
+        name: '   ',
+        registrationBegin: '2030-01-01T08:00:00.000Z',
+        registrationEnd: '2030-03-01T18:00:00.000Z',
+        inscriptionFee: 25,
+      })
+      .expect(400);
+  });
+
+  it('returns 400, not 500, when inscriptionFee exceeds the DECIMAL(8,2) column range', async () => {
+    const token = await loginAs(tenantSlug, organizerEmail);
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        number: 73,
+        year: 2030,
+        name: 'FENAC 2030 Fee',
+        registrationBegin: '2030-01-01T08:00:00.000Z',
+        registrationEnd: '2030-03-01T18:00:00.000Z',
+        inscriptionFee: 99999999,
+      })
+      .expect(400);
+  });
+
+  it('returns 400, not silently rounded, when inscriptionFee has more than 2 decimal places (closes Fix 3)', async () => {
+    const token = await loginAs(tenantSlug, organizerEmail);
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        number: 74,
+        year: 2030,
+        name: 'FENAC 2030 Fraction',
+        registrationBegin: '2030-01-01T08:00:00.000Z',
+        registrationEnd: '2030-03-01T18:00:00.000Z',
+        inscriptionFee: 25.999,
+      })
+      .expect(400);
+  });
+
+  it('returns 400, not 500, when a stage name is whitespace-only', async () => {
+    const token = await loginAs(tenantSlug, organizerEmail);
+    const createResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        number: 75,
+        year: 2030,
+        name: 'FENAC 2030 Stage',
+        registrationBegin: '2030-01-01T08:00:00.000Z',
+        registrationEnd: '2030-03-01T18:00:00.000Z',
+        inscriptionFee: 25,
+      })
+      .expect(201);
+    const festival = createResponse.body as FestivalResponseBody;
+
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals/${festival.id}/stages`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: '   ', order: 1 })
+      .expect(400);
+  });
+
+  it('returns 400, not 500, when a grade criterion name is whitespace-only', async () => {
+    const token = await loginAs(tenantSlug, organizerEmail);
+    const createResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        number: 76,
+        year: 2030,
+        name: 'FENAC 2030 Grade Criterion',
+        registrationBegin: '2030-01-01T08:00:00.000Z',
+        registrationEnd: '2030-03-01T18:00:00.000Z',
+        inscriptionFee: 25,
+      })
+      .expect(201);
+    const festival = createResponse.body as FestivalResponseBody;
+
+    const stageResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals/${festival.id}/stages`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Classificatória', order: 1 })
+      .expect(201);
+    const stage = stageResponse.body as { id: string };
+
+    await request(app.getHttpServer())
+      .post(
+        `/tenants/${tenantSlug}/festivals/stages/${stage.id}/grade-criteria`,
+      )
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: '   ', weight: 1 })
+      .expect(400);
   });
 
   it("rejects a token minted for one tenant when used to list another tenant's festivals", async () => {
