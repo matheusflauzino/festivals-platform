@@ -5,7 +5,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   AUDIT_LOG_KEY,
@@ -33,12 +33,12 @@ export class AuditLogInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<RequestWithAdmin>();
 
     return next.handle().pipe(
-      tap((result) => {
+      switchMap(async (result: unknown) => {
         const target = metadata.extractTarget?.(result) ?? {
           targetType: 'unknown',
           targetId: 'unknown',
         };
-        void this.prisma.auditLog.create({
+        await this.prisma.auditLog.create({
           data: {
             tenantId: request.admin!.tenantId,
             actorAdminId: request.admin!.id,
@@ -47,6 +47,7 @@ export class AuditLogInterceptor implements NestInterceptor {
             targetId: target.targetId,
           },
         });
+        return result;
       }),
     );
   }
