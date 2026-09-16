@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fenac-platform/contracts": "workspace:*",
     "@hookform/resolvers": "^5.9.1",
     "@tanstack/react-query": "^5.102.8",
     "axios": "^1.20.0",
