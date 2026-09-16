@@ -5,7 +5,11 @@ describe('AdminTokenService', () => {
   const jwtService = new JwtService({ secret: 'test-admin-secret' });
   const service = new AdminTokenService(jwtService);
 
-  const payload = { sub: 'admin-1', tenantId: 'tenant-1', role: 'ORGANIZER' as const };
+  const payload = {
+    sub: 'admin-1',
+    tenantId: 'tenant-1',
+    role: 'ORGANIZER' as const,
+  };
 
   it('signs and verifies an access token, carrying the role claim', () => {
     const token = service.signAccessToken(payload);
@@ -33,7 +37,9 @@ describe('AdminTokenService', () => {
   });
 
   it('rejects a token signed with a different secret', () => {
-    const otherService = new AdminTokenService(new JwtService({ secret: 'different-secret' }));
+    const otherService = new AdminTokenService(
+      new JwtService({ secret: 'different-secret' }),
+    );
     const token = otherService.signAccessToken(payload);
     expect(() => service.verifyAccessToken(token)).toThrow();
   });
