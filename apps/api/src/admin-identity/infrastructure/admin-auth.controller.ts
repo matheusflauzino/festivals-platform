@@ -96,14 +96,32 @@ export class AdminAuthController {
   @Post('invites/:token/accept')
   @HttpCode(200)
   async acceptInvite(
+    @Param('tenantSlug') tenantSlug: string,
     @Param('token') token: string,
     @Body(new ZodValidationPipe(acceptAdminInviteSchema))
     body: AcceptAdminInviteDto,
   ) {
+    const tenant = await this.findTenantBySlug.execute(tenantSlug);
+    if (!tenant) throw new NotFoundException('tenant not found');
+
+    // The invite token itself is the credential, so acceptAdminInvite doesn't
+    // (and can't) know which tenant's URL was used — check that up front,
+    // before activating anything, so a wrong-tenant URL never flips a
+    // PENDING admin to ACTIVE. Respond 404 either way (unknown token or
+    // tenant mismatch), so we don't leak that a token exists but belongs to
+    // a different tenant (same anti-enumeration principle used elsewhere in
+    // this module).
+    const pendingAdmin =
+      await this.adminUsersRepository.findByInviteToken(token);
+    if (!pendingAdmin || pendingAdmin.tenantId !== tenant.id) {
+      throw new NotFoundException();
+    }
+
     const admin = await this.acceptAdminInvite.execute({
       token,
       password: body.password,
     });
+
     return {
       id: admin.id,
       name: admin.name,
@@ -152,7 +170,7 @@ export class AdminAuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: `/tenants/${tenantSlug}/admin`,
+      path: `/tenants/${tenant.slug}/admin`,
       maxAge: REFRESH_COOKIE_MAX_AGE_MS,
     });
 

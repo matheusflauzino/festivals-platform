@@ -34,6 +34,37 @@ describe('AdminAuthController (e2e)', () => {
   const organizerEmail = 'organizer-e2e@example.com';
   const newAdminEmail = 'new-admin-e2e@example.com';
 
+  const otherTenantSlug = 'admin-auth-e2e-other-tenant';
+  let otherTenantId: string;
+  const otherOrganizerEmail = 'other-organizer-e2e@example.com';
+  const crossTenantAdminEmail = 'cross-tenant-e2e@example.com';
+
+  async function seedActiveOrganizer(
+    tenantIdForSeed: string,
+    email: string,
+    password: string,
+  ) {
+    const hasher = new BcryptPasswordHasher();
+    const organizer = AdminUser.invite({
+      tenantId: tenantIdForSeed,
+      name: 'Seed Organizer',
+      email,
+      role: 'ORGANIZER',
+    }).activate(await hasher.hash(password));
+    await prisma.adminUser.create({
+      data: {
+        id: organizer.id,
+        tenantId: organizer.tenantId,
+        name: organizer.name,
+        email: organizer.email,
+        role: organizer.role,
+        status: organizer.status,
+        passwordHash: organizer.passwordHash,
+        inviteToken: organizer.inviteToken,
+      },
+    });
+  }
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -54,37 +85,38 @@ describe('AdminAuthController (e2e)', () => {
     });
     tenantId = tenant.id;
 
+    const otherTenant = await prisma.tenant.create({
+      data: {
+        name: 'Admin Auth E2E Other Tenant',
+        document: 'AA987654321098',
+        slug: otherTenantSlug,
+        status: 'ACTIVE',
+      },
+    });
+    otherTenantId = otherTenant.id;
+
     // Seed the first ORGANIZER directly — bootstrapping the very first admin of a
     // tenant is out of scope for this plan (see Global Constraints); production
     // bootstrapping happens via the future legacy-data migration.
-    const hasher = new BcryptPasswordHasher();
-    const organizer = AdminUser.invite({
-      tenantId,
-      name: 'Seed Organizer',
-      email: organizerEmail,
-      role: 'ORGANIZER',
-    }).activate(await hasher.hash('organizer-password'));
-    await prisma.adminUser.create({
-      data: {
-        id: organizer.id,
-        tenantId: organizer.tenantId,
-        name: organizer.name,
-        email: organizer.email,
-        role: organizer.role,
-        status: organizer.status,
-        passwordHash: organizer.passwordHash,
-        inviteToken: organizer.inviteToken,
-      },
-    });
+    await seedActiveOrganizer(tenantId, organizerEmail, 'organizer-password');
+    await seedActiveOrganizer(
+      otherTenantId,
+      otherOrganizerEmail,
+      'other-organizer-password',
+    );
   });
 
   afterEach(async () => {
-    await prisma.adminUser.deleteMany({ where: { email: newAdminEmail } });
+    await prisma.adminUser.deleteMany({
+      where: { email: { in: [newAdminEmail, crossTenantAdminEmail] } },
+    });
   });
 
   afterAll(async () => {
     await prisma.adminUser.deleteMany({ where: { tenantId } });
+    await prisma.adminUser.deleteMany({ where: { tenantId: otherTenantId } });
     await prisma.tenant.deleteMany({ where: { id: tenantId } });
+    await prisma.tenant.deleteMany({ where: { id: otherTenantId } });
     await app.close();
   });
 
@@ -219,5 +251,60 @@ describe('AdminAuthController (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Duplicate', email: newAdminEmail, role: 'COMMITTEE' })
       .expect(409);
+  });
+
+  it("rejects a token minted for one tenant when used against another tenant's /me", async () => {
+    const token = await organizerAccessToken();
+
+    await request(app.getHttpServer())
+      .get(`/tenants/${otherTenantSlug}/admin/me`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(401);
+  });
+
+  it('rejects a cross-tenant invite attempt and does not create an admin in the target tenant', async () => {
+    const token = await organizerAccessToken();
+
+    await request(app.getHttpServer())
+      .post(`/tenants/${otherTenantSlug}/admin/invites`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Cross Tenant Admin',
+        email: crossTenantAdminEmail,
+        role: 'JUDGE',
+      })
+      .expect(401);
+
+    const created = await prisma.adminUser.findFirst({
+      where: { email: crossTenantAdminEmail },
+    });
+    expect(created).toBeNull();
+  });
+
+  it('rejects accepting an invite via the wrong tenant URL, leaving the admin PENDING', async () => {
+    const token = await organizerAccessToken();
+
+    const inviteResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/admin/invites`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'New Admin', email: newAdminEmail, role: 'JUDGE' })
+      .expect(201);
+
+    const invited = inviteResponse.body as InviteResponseBody;
+    const created = await prisma.adminUser.findUniqueOrThrow({
+      where: { id: invited.id },
+    });
+    const inviteToken = created.inviteToken as string;
+
+    await request(app.getHttpServer())
+      .post(`/tenants/${otherTenantSlug}/admin/invites/${inviteToken}/accept`)
+      .send({ password: 'a-strong-password' })
+      .expect(404);
+
+    const stillPending = await prisma.adminUser.findUniqueOrThrow({
+      where: { id: invited.id },
+    });
+    expect(stillPending.status).toBe('PENDING');
+    expect(stillPending.passwordHash).toBeNull();
   });
 });
