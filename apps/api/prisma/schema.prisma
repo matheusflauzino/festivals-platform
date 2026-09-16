@@ -23,6 +23,12 @@ enum AdminStatus {
   ACTIVE
 }
 
+enum FestivalStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
 model Tenant {
   id         String       @id @default(uuid())
   name       String
@@ -33,6 +39,7 @@ model Tenant {
   updatedAt  DateTime     @updatedAt @map("updated_at")
   users      User[]
   adminUsers AdminUser[]
+  festivals  Festival[]
 
   @@map("tenants")
 }
@@ -81,4 +88,55 @@ model AuditLog {
 
   @@index([tenantId, createdAt])
   @@map("audit_logs")
+}
+
+model Festival {
+  id                String         @id @default(uuid())
+  tenantId          String         @map("tenant_id")
+  tenant            Tenant         @relation(fields: [tenantId], references: [id])
+  number            Int
+  year              Int
+  name              String
+  registrationBegin DateTime       @map("registration_begin")
+  registrationEnd   DateTime       @map("registration_end")
+  votingBegin       DateTime?      @map("voting_begin")
+  votingEnd         DateTime?      @map("voting_end")
+  status            FestivalStatus @default(DRAFT)
+  inscriptionFee    Decimal        @map("inscription_fee") @db.Decimal(8, 2)
+  regulationUrl     String?        @map("regulation_url")
+  allowedStates     Json           @map("allowed_states")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  stages            Stage[]
+
+  @@unique([tenantId, number, year])
+  @@map("festivals")
+}
+
+model Stage {
+  id               String   @id @default(uuid())
+  tenantId         String   @map("tenant_id")
+  festivalId       String   @map("festival_id")
+  festival         Festival @relation(fields: [festivalId], references: [id])
+  name             String
+  order            Int
+  advancementQuota Int?     @map("advancement_quota")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  gradeCriteria    GradeCriterion[]
+
+  @@map("stages")
+}
+
+model GradeCriterion {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  stageId   String   @map("stage_id")
+  stage     Stage    @relation(fields: [stageId], references: [id])
+  name      String
+  weight    Decimal  @db.Decimal(5, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("grade_criteria")
 }
