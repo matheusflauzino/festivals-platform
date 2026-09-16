@@ -24,10 +24,10 @@ enum AdminStatus {
 }
 
 model Tenant {
-  id         String      @id @default(uuid())
+  id         String       @id @default(uuid())
   name       String
-  document   String      @unique
-  slug       String      @unique
+  document   String       @unique
+  slug       String       @unique
   status     TenantStatus @default(ACTIVE)
   createdAt  DateTime     @default(now()) @map("created_at")
   updatedAt  DateTime     @updatedAt @map("updated_at")
@@ -71,13 +71,14 @@ model AdminUser {
 }
 
 model AuditLog {
-  id            String   @id @default(uuid())
-  tenantId      String   @map("tenant_id")
-  actorAdminId  String   @map("actor_admin_id")
-  action        String
-  targetType    String   @map("target_type")
-  targetId      String   @map("target_id")
-  createdAt     DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  actorAdminId String   @map("actor_admin_id")
+  action       String
+  targetType   String   @map("target_type")
+  targetId     String   @map("target_id")
+  createdAt    DateTime @default(now()) @map("created_at")
 
+  @@index([tenantId, createdAt])
   @@map("audit_logs")
 }
