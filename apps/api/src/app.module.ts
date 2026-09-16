@@ -5,9 +5,16 @@ import { PrismaModule } from './prisma/prisma.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { IdentityModule } from './identity/identity.module';
 import { AdminIdentityModule } from './admin-identity/admin-identity.module';
+import { FestivalsModule } from './festivals/festivals.module';
 
 @Module({
-  imports: [PrismaModule, TenantsModule, IdentityModule, AdminIdentityModule],
+  imports: [
+    PrismaModule,
+    TenantsModule,
+    IdentityModule,
+    AdminIdentityModule,
+    FestivalsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
