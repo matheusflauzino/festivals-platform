@@ -15,3 +15,17 @@ export type {
   AcceptAdminInviteDto,
   LoginAdminUserDto,
 } from './admin-auth.schema.js';
+
+export {
+  createFestivalSchema,
+  updateFestivalSchema,
+  createStageSchema,
+  createGradeCriterionSchema,
+  BRAZILIAN_STATES,
+} from './festival.schema.js';
+export type {
+  CreateFestivalDto,
+  UpdateFestivalDto,
+  CreateStageDto,
+  CreateGradeCriterionDto,
+} from './festival.schema.js';
