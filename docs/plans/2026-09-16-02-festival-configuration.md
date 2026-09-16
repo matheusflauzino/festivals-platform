@@ -2275,7 +2275,7 @@ export type {
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `cd packages/contracts && pnpm exec vitest run festival.schema.spec.ts`
-Expected: PASS (9 tests).
+Expected: PASS (8 tests).
 
 - [ ] **Step 6: Verify build and lint**
 
