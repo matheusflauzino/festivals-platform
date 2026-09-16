@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { FestivalValidationError } from './festival-validation.error';
 
 export interface StageProps {
   id: string;
@@ -23,17 +24,19 @@ export class Stage {
 
   static create(input: CreateStageInput): Stage {
     if (input.name.trim().length === 0) {
-      throw new Error('name must not be empty');
+      throw new FestivalValidationError('name must not be empty');
     }
     if (!Number.isInteger(input.order) || input.order < 1) {
-      throw new Error('order must be a positive integer');
+      throw new FestivalValidationError('order must be a positive integer');
     }
     if (
       input.advancementQuota !== undefined &&
       input.advancementQuota !== null &&
       (!Number.isInteger(input.advancementQuota) || input.advancementQuota < 1)
     ) {
-      throw new Error('advancementQuota must be a positive integer when set');
+      throw new FestivalValidationError(
+        'advancementQuota must be a positive integer when set',
+      );
     }
 
     return new Stage({

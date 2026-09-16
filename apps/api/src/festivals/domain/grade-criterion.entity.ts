@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { FestivalValidationError } from './festival-validation.error';
 
 export interface GradeCriterionProps {
   id: string;
@@ -21,10 +22,10 @@ export class GradeCriterion {
 
   static create(input: CreateGradeCriterionInput): GradeCriterion {
     if (input.name.trim().length === 0) {
-      throw new Error('name must not be empty');
+      throw new FestivalValidationError('name must not be empty');
     }
     if (input.weight <= 0) {
-      throw new Error('weight must be greater than zero');
+      throw new FestivalValidationError('weight must be greater than zero');
     }
 
     return new GradeCriterion({

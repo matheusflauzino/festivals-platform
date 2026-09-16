@@ -32,6 +32,7 @@ import { AuditLog } from '../../common/decorators/audit-log.decorator';
 import { AuditLogInterceptor } from '../../common/interceptors/audit-log.interceptor';
 import { FestivalConflictExceptionFilter } from '../../common/filters/festival-conflict.filter';
 import { InvalidFestivalStateExceptionFilter } from '../../common/filters/invalid-festival-state.filter';
+import { FestivalValidationExceptionFilter } from '../../common/filters/festival-validation.filter';
 import { FindTenantBySlugUseCase } from '../../tenants/application/use-cases/find-tenant-by-slug.use-case';
 import type { Tenant } from '../../tenants/domain/tenant.entity';
 import { AdminAuthGuard } from '../../admin-identity/infrastructure/admin-auth.guard';
@@ -55,6 +56,7 @@ import type { GradeCriterion } from '../domain/grade-criterion.entity';
 @UseFilters(
   FestivalConflictExceptionFilter,
   InvalidFestivalStateExceptionFilter,
+  FestivalValidationExceptionFilter,
 )
 export class FestivalsController {
   constructor(

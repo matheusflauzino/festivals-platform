@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { InvalidFestivalStateError } from './invalid-festival-state.error';
+import { FestivalValidationError } from './festival-validation.error';
 
 export type FestivalStatus = 'DRAFT' | 'OPEN' | 'CLOSED';
 
@@ -73,15 +74,17 @@ export type UpdateFestivalDetailsInput = FestivalDetailsInput;
 
 function validateDetails(input: FestivalDetailsInput): void {
   if (input.name.trim().length === 0) {
-    throw new Error('name must not be empty');
+    throw new FestivalValidationError('name must not be empty');
   }
   if (input.registrationBegin.getTime() >= input.registrationEnd.getTime()) {
-    throw new Error('registrationBegin must be before registrationEnd');
+    throw new FestivalValidationError(
+      'registrationBegin must be before registrationEnd',
+    );
   }
   const hasVotingBegin = input.votingBegin != null;
   const hasVotingEnd = input.votingEnd != null;
   if (hasVotingBegin !== hasVotingEnd) {
-    throw new Error(
+    throw new FestivalValidationError(
       'votingBegin and votingEnd must both be set or both be null',
     );
   }
@@ -90,14 +93,14 @@ function validateDetails(input: FestivalDetailsInput): void {
     hasVotingEnd &&
     input.votingBegin!.getTime() >= input.votingEnd!.getTime()
   ) {
-    throw new Error('votingBegin must be before votingEnd');
+    throw new FestivalValidationError('votingBegin must be before votingEnd');
   }
   if (input.inscriptionFee < 0) {
-    throw new Error('inscriptionFee must not be negative');
+    throw new FestivalValidationError('inscriptionFee must not be negative');
   }
   for (const state of input.allowedStates ?? []) {
     if (!(BRAZILIAN_STATES as readonly string[]).includes(state)) {
-      throw new Error(`invalid state: ${state}`);
+      throw new FestivalValidationError(`invalid state: ${state}`);
     }
   }
 }
@@ -107,14 +110,14 @@ export class Festival {
 
   static create(input: CreateFestivalInput): Festival {
     if (!Number.isInteger(input.number) || input.number <= 0) {
-      throw new Error('number must be a positive integer');
+      throw new FestivalValidationError('number must be a positive integer');
     }
     if (
       !Number.isInteger(input.year) ||
       input.year < 1900 ||
       input.year > 2200
     ) {
-      throw new Error('year must be a valid 4-digit year');
+      throw new FestivalValidationError('year must be a valid 4-digit year');
     }
     validateDetails(input);
 
@@ -143,17 +146,34 @@ export class Festival {
   }
 
   updateDetails(input: UpdateFestivalDetailsInput): Festival {
-    validateDetails(input);
-    return new Festival({
-      ...this.props,
+    if (this.props.status === 'CLOSED') {
+      throw new InvalidFestivalStateError('a CLOSED festival cannot be edited');
+    }
+
+    const merged = {
       name: input.name,
       registrationBegin: input.registrationBegin,
       registrationEnd: input.registrationEnd,
-      votingBegin: input.votingBegin ?? null,
-      votingEnd: input.votingEnd ?? null,
+      votingBegin:
+        input.votingBegin !== undefined
+          ? input.votingBegin
+          : this.props.votingBegin,
+      votingEnd:
+        input.votingEnd !== undefined ? input.votingEnd : this.props.votingEnd,
       inscriptionFee: input.inscriptionFee,
-      regulationUrl: input.regulationUrl ?? null,
-      allowedStates: input.allowedStates ?? [],
+      regulationUrl:
+        input.regulationUrl !== undefined
+          ? input.regulationUrl
+          : this.props.regulationUrl,
+      allowedStates:
+        input.allowedStates !== undefined
+          ? input.allowedStates
+          : this.props.allowedStates,
+    };
+    validateDetails(merged);
+    return new Festival({
+      ...this.props,
+      ...merged,
       updatedAt: new Date(),
     });
   }
