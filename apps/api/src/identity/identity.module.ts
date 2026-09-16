@@ -14,7 +14,15 @@ import { AuthenticateUserUseCase } from './application/use-cases/authenticate-us
 @Module({
   imports: [
     TenantsModule,
-    JwtModule.register({ secret: process.env.JWT_SECRET }),
+    JwtModule.registerAsync({
+      useFactory: () => {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+          throw new Error('JWT_SECRET is not set');
+        }
+        return { secret };
+      },
+    }),
   ],
   controllers: [AuthController],
   providers: [
