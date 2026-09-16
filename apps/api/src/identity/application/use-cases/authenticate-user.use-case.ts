@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { User } from '../../domain/user.entity';
+import { InvalidCredentialsError } from '../../domain/invalid-credentials.error';
 import { USERS_REPOSITORY } from '../ports/users-repository.port';
 import type { UsersRepositoryPort } from '../ports/users-repository.port';
 import { PASSWORD_HASHER } from '../ports/password-hasher.port';
@@ -26,7 +27,7 @@ export class AuthenticateUserUseCase {
       input.identifier,
     );
     if (!user) {
-      throw new Error('invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
     const passwordMatches = await this.passwordHasher.compare(
@@ -34,7 +35,7 @@ export class AuthenticateUserUseCase {
       user.passwordHash,
     );
     if (!passwordMatches) {
-      throw new Error('invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
     return user;

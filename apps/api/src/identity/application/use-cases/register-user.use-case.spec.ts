@@ -1,6 +1,7 @@
 import { RegisterUserUseCase } from './register-user.use-case';
 import { InMemoryUsersRepository } from '../../infrastructure/in-memory-users.repository';
 import { PasswordHasherPort } from '../ports/password-hasher.port';
+import { UserConflictError } from '../../domain/user-conflict.error';
 
 class FakePasswordHasher implements PasswordHasherPort {
   hash(plain: string): Promise<string> {
@@ -57,7 +58,7 @@ describe('RegisterUserUseCase', () => {
         cpf: '10987654321',
         password: 'pw2',
       }),
-    ).rejects.toThrow('email or cpf already registered');
+    ).rejects.toThrow(UserConflictError);
   });
 
   it('allows the same email in a different tenant', async () => {

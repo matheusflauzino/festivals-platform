@@ -2,6 +2,7 @@ import { AuthenticateUserUseCase } from './authenticate-user.use-case';
 import { RegisterUserUseCase } from './register-user.use-case';
 import { InMemoryUsersRepository } from '../../infrastructure/in-memory-users.repository';
 import { PasswordHasherPort } from '../ports/password-hasher.port';
+import { InvalidCredentialsError } from '../../domain/invalid-credentials.error';
 
 class FakePasswordHasher implements PasswordHasherPort {
   hash(plain: string): Promise<string> {
@@ -74,6 +75,13 @@ describe('AuthenticateUserUseCase', () => {
         password: 'wrong-password',
       }),
     ).rejects.toThrow('invalid credentials');
+    await expect(
+      useCase.execute({
+        tenantId: 'tenant-1',
+        identifier: 'ana@example.com',
+        password: 'wrong-password',
+      }),
+    ).rejects.toThrow(InvalidCredentialsError);
   });
 
   it('rejects an unknown identifier', async () => {
@@ -88,5 +96,12 @@ describe('AuthenticateUserUseCase', () => {
         password: 'anything',
       }),
     ).rejects.toThrow('invalid credentials');
+    await expect(
+      useCase.execute({
+        tenantId: 'tenant-1',
+        identifier: 'nobody@example.com',
+        password: 'anything',
+      }),
+    ).rejects.toThrow(InvalidCredentialsError);
   });
 });

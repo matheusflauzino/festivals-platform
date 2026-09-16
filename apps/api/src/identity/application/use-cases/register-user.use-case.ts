@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { User } from '../../domain/user.entity';
+import { UserConflictError } from '../../domain/user-conflict.error';
 import { USERS_REPOSITORY } from '../ports/users-repository.port';
 import type { UsersRepositoryPort } from '../ports/users-repository.port';
 import { PASSWORD_HASHER } from '../ports/password-hasher.port';
@@ -32,7 +33,7 @@ export class RegisterUserUseCase {
       input.cpf,
     );
     if (existingByEmail || existingByCpf) {
-      throw new Error('email or cpf already registered');
+      throw new UserConflictError(existingByEmail ? 'email' : 'cpf');
     }
 
     const passwordHash = await this.passwordHasher.hash(input.password);
