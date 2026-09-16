@@ -578,7 +578,17 @@ export class PrismaAdminUsersRepository
     inviteToken: string | null;
     createdAt: Date;
   }): AdminUser {
-    return AdminUser.restore(row as unknown as AdminUserProps);
+    return AdminUser.restore({
+      id: row.id,
+      tenantId: row.tenantId,
+      name: row.name,
+      email: row.email,
+      role: row.role as AdminUserProps['role'],
+      status: row.status as AdminUserProps['status'],
+      passwordHash: row.passwordHash,
+      inviteToken: row.inviteToken,
+      createdAt: row.createdAt,
+    });
   }
 }
 ```
@@ -902,7 +912,6 @@ Create `apps/api/src/common/guards/roles.guard.spec.ts`:
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
-import { ROLES_KEY } from '../decorators/roles.decorator';
 
 function makeContext(adminRole: string | undefined, requiredRoles: string[] | undefined) {
   const request = { admin: adminRole ? { role: adminRole } : undefined };
@@ -1507,7 +1516,7 @@ import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { of, throwError } from 'rxjs';
 import { AuditLogInterceptor } from './audit-log.interceptor';
-import { AUDIT_LOG_KEY, AuditLogMetadata } from '../decorators/audit-log.decorator';
+import type { AuditLogMetadata } from '../decorators/audit-log.decorator';
 
 describe('AuditLogInterceptor', () => {
   function makeContextAndHandler(
@@ -1811,11 +1820,12 @@ git commit -m "feat(contracts): add admin invite/accept/login schemas"
 **Files:**
 - Create: `apps/api/src/admin-identity/infrastructure/admin-auth.controller.ts`
 - Create: `apps/api/src/admin-identity/admin-identity.module.ts`
+- Create: `apps/api/src/common/filters/admin-conflict.filter.ts`
 - Modify: `apps/api/src/app.module.ts`
 - Test: `apps/api/test/admin-auth.e2e-spec.ts`
 
 **Interfaces:**
-- Consumes: everything from Tasks 1-12 — `FindTenantBySlugUseCase` (existing, from `tenants` module), `InviteAdminUserUseCase`, `AcceptAdminInviteUseCase`, `AuthenticateAdminUserUseCase`, `AdminTokenService`, `AdminAuthGuard`, `RolesGuard`/`@Roles()`, `AuditLogInterceptor`/`@AuditLog()`, `inviteAdminUserSchema`/`acceptAdminInviteSchema`/`loginAdminUserSchema` from `@fenac-platform/contracts`.
+- Consumes: everything from Tasks 1-12 — `FindTenantBySlugUseCase` (existing, from `tenants` module), `InviteAdminUserUseCase`, `AcceptAdminInviteUseCase`, `AuthenticateAdminUserUseCase`, `AdminTokenService`, `AdminAuthGuard`, `RolesGuard`/`@Roles()`, `AuditLogInterceptor`/`@AuditLog()`, `AdminConflictError` (Task 8), `inviteAdminUserSchema`/`acceptAdminInviteSchema`/`loginAdminUserSchema` from `@fenac-platform/contracts`.
 - Produces: `POST /tenants/:tenantSlug/admin/invites` (201, `ORGANIZER`-only, audit-logged) · `POST /tenants/:tenantSlug/admin/invites/:token/accept` (200, public) · `POST /tenants/:tenantSlug/admin/login` (200, sets `adminRefreshToken` httpOnly cookie, returns `{accessToken, admin}`) · `POST /tenants/:tenantSlug/admin/refresh` (200) · `GET /tenants/:tenantSlug/admin/me` (200, any authenticated admin, tenant-scoped like the participant module's `/me`).
 
 - [ ] **Step 1: Write the failing e2e test**
@@ -2017,6 +2027,22 @@ describe('AdminAuthController (e2e)', () => {
     expect(logs[0].action).toBe('invited_admin');
     await prisma.auditLog.deleteMany({ where: { targetId: invited.id } });
   });
+
+  it('returns 409, not 500, when inviting an already-registered email', async () => {
+    const token = await organizerAccessToken();
+
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/admin/invites`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'New Admin', email: newAdminEmail, role: 'JUDGE' })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/admin/invites`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Duplicate', email: newAdminEmail, role: 'COMMITTEE' })
+      .expect(409);
+  });
 });
 ```
 
@@ -2026,7 +2052,27 @@ Ensure MySQL is up: `docker compose up -d mysql`
 Run: `cd apps/api && pnpm run test:e2e admin-auth.e2e-spec.ts`
 Expected: FAIL — 404, no `/tenants/:tenantSlug/admin/*` routes registered yet.
 
-- [ ] **Step 3: Implement the controller**
+- [ ] **Step 3: Add the `AdminConflictError` → 409 exception filter**
+
+`InviteAdminUserUseCase` (Task 8) throws a plain `AdminConflictError` on a duplicate email — left uncaught, this becomes an unhandled 500 instead of a 409. Mirror the `tenants`/`identity` modules' existing precedent (`apps/api/src/common/filters/user-conflict.filter.ts`) exactly rather than inventing a new shape.
+
+Create `apps/api/src/common/filters/admin-conflict.filter.ts`:
+
+```typescript
+import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
+import { Response } from 'express';
+import { AdminConflictError } from '../../admin-identity/domain/admin-conflict.error';
+
+@Catch(AdminConflictError)
+export class AdminConflictExceptionFilter implements ExceptionFilter {
+  catch(exception: AdminConflictError, host: ArgumentsHost) {
+    const response = host.switchToHttp().getResponse<Response>();
+    response.status(409).json({ statusCode: 409, message: exception.message });
+  }
+}
+```
+
+- [ ] **Step 4: Implement the controller**
 
 Create `apps/api/src/admin-identity/infrastructure/admin-auth.controller.ts`:
 
@@ -2043,6 +2089,7 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseFilters,
   UseGuards,
   UseInterceptors,
   UsePipes,
@@ -2063,6 +2110,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuditLog } from '../../common/decorators/audit-log.decorator';
 import { AuditLogInterceptor } from '../../common/interceptors/audit-log.interceptor';
+import { AdminConflictExceptionFilter } from '../../common/filters/admin-conflict.filter';
 import { FindTenantBySlugUseCase } from '../../tenants/application/use-cases/find-tenant-by-slug.use-case';
 import { InviteAdminUserUseCase } from '../application/use-cases/invite-admin-user.use-case';
 import { AcceptAdminInviteUseCase } from '../application/use-cases/accept-admin-invite.use-case';
@@ -2078,6 +2126,7 @@ import { InvalidAdminCredentialsError } from '../domain/invalid-admin-credential
 const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Controller('tenants/:tenantSlug/admin')
+@UseFilters(AdminConflictExceptionFilter)
 export class AdminAuthController {
   constructor(
     private readonly findTenantBySlug: FindTenantBySlugUseCase,
@@ -2216,7 +2265,7 @@ export class AdminAuthController {
 }
 ```
 
-- [ ] **Step 4: Wire the module**
+- [ ] **Step 5: Wire the module**
 
 Create `apps/api/src/admin-identity/admin-identity.module.ts`:
 
@@ -2234,6 +2283,8 @@ import { AcceptAdminInviteUseCase } from './application/use-cases/accept-admin-i
 import { AuthenticateAdminUserUseCase } from './application/use-cases/authenticate-admin-user.use-case';
 import { BcryptPasswordHasher } from '../identity/infrastructure/bcrypt-password-hasher';
 import { PASSWORD_HASHER } from '../identity/application/ports/password-hasher.port';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { AuditLogInterceptor } from '../common/interceptors/audit-log.interceptor';
 
 @Module({
   imports: [
@@ -2255,6 +2306,8 @@ import { PASSWORD_HASHER } from '../identity/application/ports/password-hasher.p
     AuthenticateAdminUserUseCase,
     AdminTokenService,
     AdminAuthGuard,
+    RolesGuard,
+    AuditLogInterceptor,
     { provide: ADMIN_USERS_REPOSITORY, useClass: PrismaAdminUsersRepository },
     { provide: PASSWORD_HASHER, useClass: BcryptPasswordHasher },
   ],
@@ -2263,14 +2316,16 @@ import { PASSWORD_HASHER } from '../identity/application/ports/password-hasher.p
 export class AdminIdentityModule {}
 ```
 
+**Note for the implementer:** `@UseGuards(AdminAuthGuard, RolesGuard)` and `@UseInterceptors(AuditLogInterceptor)` on the `invite` handler reference these classes directly — NestJS only resolves their constructor dependencies (`Reflector`, `PrismaService`) correctly if the class is registered as a provider in a reachable module, which is why `RolesGuard` and `AuditLogInterceptor` are in the `providers` array above even though nothing directly injects them elsewhere. `Reflector` itself needs no explicit registration — it's a built-in Nest core provider available everywhere. `PrismaService` needs no explicit import either — it's exported by the `@Global()` `PrismaModule` from the bootstrap plan.
+
 Open `apps/api/src/app.module.ts` and add `AdminIdentityModule` to its `imports` array, importing from `./admin-identity/admin-identity.module`.
 
-- [ ] **Step 5: Run the e2e test to verify it passes**
+- [ ] **Step 6: Run the e2e test to verify it passes**
 
 Run: `cd apps/api && pnpm run test:e2e admin-auth.e2e-spec.ts`
-Expected: PASS (all 4 cases).
+Expected: PASS (all 5 cases).
 
-- [ ] **Step 6: Run the full test suite**
+- [ ] **Step 7: Run the full test suite**
 
 Run: `cd apps/api && pnpm run test && pnpm run test:integration && pnpm run test:e2e`
 Expected: all PASS.
@@ -2279,7 +2334,7 @@ Expected: exit 0, no TS1272 or other errors — this project has hit type-only-i
 Run: `cd apps/api && pnpm run lint`
 Expected: 0 errors (pre-existing warnings on `app.getHttpServer()` calls are tolerated; no new errors).
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add apps/api/src apps/api/test
