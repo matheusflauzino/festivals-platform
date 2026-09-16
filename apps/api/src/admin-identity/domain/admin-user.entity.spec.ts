@@ -20,9 +20,9 @@ describe('AdminUser', () => {
   });
 
   it('rejects an invalid email', () => {
-    expect(() => AdminUser.invite({ ...validInput, email: 'not-an-email' })).toThrow(
-      'invalid email',
-    );
+    expect(() =>
+      AdminUser.invite({ ...validInput, email: 'not-an-email' }),
+    ).toThrow('invalid email');
   });
 
   it('rejects an invalid role', () => {

@@ -22,7 +22,9 @@ describe('TenantScopedRepository', () => {
 
   it('does not let a caller-supplied tenantId override the real one', () => {
     const repo = new TestRepository();
-    expect(repo.buildWhere('tenant-1', { tenantId: 'attacker-tenant' })).toEqual({
+    expect(
+      repo.buildWhere('tenant-1', { tenantId: 'attacker-tenant' }),
+    ).toEqual({
       tenantId: 'tenant-1',
     });
   });
