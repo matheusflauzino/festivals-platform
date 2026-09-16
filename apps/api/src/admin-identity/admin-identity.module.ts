@@ -23,6 +23,16 @@ import { AuditLogInterceptor } from '../common/interceptors/audit-log.intercepto
         if (!secret) {
           throw new Error('ADMIN_JWT_SECRET is not set');
         }
+        // The whole point of a dedicated admin token service is that a leaked
+        // participant JWT_SECRET can't forge an admin token (or vice versa).
+        // That guarantee silently disappears if the two env vars are ever
+        // set to the same value, so fail fast at startup instead of relying
+        // on nobody making that mistake.
+        if (process.env.JWT_SECRET && process.env.JWT_SECRET === secret) {
+          throw new Error(
+            'ADMIN_JWT_SECRET must not be the same value as JWT_SECRET',
+          );
+        }
         return { secret };
       },
     }),
