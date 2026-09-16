@@ -2,6 +2,7 @@ import {
   CallHandler,
   ExecutionContext,
   Injectable,
+  Logger,
   NestInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -15,6 +16,8 @@ import type { RequestWithAdmin } from '../../admin-identity/infrastructure/admin
 
 @Injectable()
 export class AuditLogInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(AuditLogInterceptor.name);
+
   constructor(
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
@@ -38,15 +41,22 @@ export class AuditLogInterceptor implements NestInterceptor {
           targetType: 'unknown',
           targetId: 'unknown',
         };
-        await this.prisma.auditLog.create({
-          data: {
-            tenantId: request.admin!.tenantId,
-            actorAdminId: request.admin!.id,
-            action: metadata.action,
-            targetType: target.targetType,
-            targetId: target.targetId,
-          },
-        });
+        const data = {
+          tenantId: request.admin!.tenantId,
+          actorAdminId: request.admin!.id,
+          action: metadata.action,
+          targetType: target.targetType,
+          targetId: target.targetId,
+        };
+        try {
+          await this.prisma.auditLog.create({ data });
+        } catch (error) {
+          this.logger.error(
+            `Failed to write audit log row: ${JSON.stringify(data)}`,
+            error instanceof Error ? error.stack : error,
+          );
+          throw error;
+        }
         return result;
       }),
     );
