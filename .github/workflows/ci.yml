@@ -25,6 +25,7 @@ jobs:
           --health-retries=10
     env:
       DATABASE_URL: "mysql://fenac:fenac@localhost:3306/fenac"
+      JWT_SECRET: "ci-only-test-secret"
     steps:
       - uses: actions/checkout@v4
 
