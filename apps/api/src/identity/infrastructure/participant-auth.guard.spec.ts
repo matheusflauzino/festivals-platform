@@ -48,4 +48,14 @@ describe('ParticipantAuthGuard', () => {
     const context = makeContext('Basic dXNlcjpwYXNz');
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
+
+  it('rejects a valid refresh token presented as a bearer access token', () => {
+    const refreshToken = tokenService.signRefreshToken({
+      sub: 'user-1',
+      tenantId: 'tenant-1',
+    });
+    const context = makeContext(`Bearer ${refreshToken}`);
+
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+  });
 });

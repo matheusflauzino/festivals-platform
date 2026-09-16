@@ -42,7 +42,7 @@ describe('PrismaUsersRepository (integration)', () => {
     );
     expect(foundByCpf?.id).toBe(user.id);
 
-    const foundById = await repository.findById(user.id);
+    const foundById = await repository.findById(tenantId, user.id);
     expect(foundById?.email).toBe(email);
   });
 

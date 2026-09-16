@@ -30,6 +30,7 @@ describe('AuthController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   const tenantSlug = 'auth-e2e-tenant';
+  const otherTenantSlug = 'auth-e2e-other-tenant';
   const userEmail = 'auth-e2e-user@example.com';
   const secondUserEmail = 'auth-e2e-second-user@example.com';
 
@@ -52,6 +53,16 @@ describe('AuthController (e2e)', () => {
         status: 'ACTIVE',
       },
     });
+
+    await prisma.tenant.create({
+      data: {
+        id: 'auth-e2e-other-tenant-id',
+        name: 'Auth E2E Other Tenant',
+        document: 'AE987654321098',
+        slug: otherTenantSlug,
+        status: 'ACTIVE',
+      },
+    });
   });
 
   afterEach(async () => {
@@ -61,7 +72,9 @@ describe('AuthController (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.tenant.deleteMany({ where: { slug: tenantSlug } });
+    await prisma.tenant.deleteMany({
+      where: { slug: { in: [tenantSlug, otherTenantSlug] } },
+    });
     await app.close();
   });
 
@@ -86,6 +99,7 @@ describe('AuthController (e2e)', () => {
     expect(loginBody.user.email).toBe(userEmail);
     const setCookieHeader = loginResponse.headers['set-cookie'];
     expect(setCookieHeader[0]).toContain('refreshToken=');
+    expect(setCookieHeader[0]).toContain('HttpOnly');
 
     const refreshResponse = await request(app.getHttpServer())
       .post(`/tenants/${tenantSlug}/auth/refresh`)
@@ -203,5 +217,51 @@ describe('AuthController (e2e)', () => {
     expect(secondMeBody.email).toBe(secondUserEmail);
     expect(secondMeBody.name).toBe('Bruno Costa');
     expect(firstMeBody.id).not.toBe(secondMeBody.id);
+  });
+
+  it('returns 409 when registering a duplicate email in the same tenant', async () => {
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/register`)
+      .send({
+        name: 'Ana Silva',
+        email: userEmail,
+        cpf: '12345678901',
+        password: 'a-strong-password',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/register`)
+      .send({
+        name: 'Ana Silva Duplicada',
+        email: userEmail,
+        cpf: '10987654321',
+        password: 'another-password',
+      })
+      .expect(409);
+  });
+
+  it("rejects a token minted for one tenant when used against another tenant's /me", async () => {
+    await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/register`)
+      .send({
+        name: 'Ana Silva',
+        email: userEmail,
+        cpf: '12345678901',
+        password: 'a-strong-password',
+      })
+      .expect(201);
+
+    const loginResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/auth/login`)
+      .send({ identifier: userEmail, password: 'a-strong-password' })
+      .expect(200);
+
+    const accessToken = (loginResponse.body as LoginResponseBody).accessToken;
+
+    await request(app.getHttpServer())
+      .get(`/tenants/${otherTenantSlug}/auth/me`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(401);
   });
 });

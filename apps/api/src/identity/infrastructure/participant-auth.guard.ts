@@ -26,7 +26,7 @@ export class ParticipantAuthGuard implements CanActivate {
     const token = authHeader.slice('Bearer '.length);
 
     try {
-      const payload = this.tokenService.verify(token);
+      const payload = this.tokenService.verifyAccessToken(token);
       request.participant = { id: payload.sub, tenantId: payload.tenantId };
       return true;
     } catch {

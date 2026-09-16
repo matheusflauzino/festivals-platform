@@ -10,7 +10,7 @@ describe('ParticipantTokenService', () => {
       sub: 'user-1',
       tenantId: 'tenant-1',
     });
-    const payload = service.verify(token);
+    const payload = service.verifyAccessToken(token);
 
     expect(payload.sub).toBe('user-1');
     expect(payload.tenantId).toBe('tenant-1');
@@ -21,7 +21,7 @@ describe('ParticipantTokenService', () => {
       sub: 'user-1',
       tenantId: 'tenant-1',
     });
-    const payload = service.verify(token);
+    const payload = service.verifyRefreshToken(token);
 
     expect(payload.sub).toBe('user-1');
   });
@@ -35,6 +35,24 @@ describe('ParticipantTokenService', () => {
       tenantId: 'tenant-1',
     });
 
-    expect(() => service.verify(token)).toThrow();
+    expect(() => service.verifyAccessToken(token)).toThrow();
+  });
+
+  it('rejects a refresh token when verified as an access token', () => {
+    const token = service.signRefreshToken({
+      sub: 'user-1',
+      tenantId: 'tenant-1',
+    });
+
+    expect(() => service.verifyAccessToken(token)).toThrow();
+  });
+
+  it('rejects an access token when verified as a refresh token', () => {
+    const token = service.signAccessToken({
+      sub: 'user-1',
+      tenantId: 'tenant-1',
+    });
+
+    expect(() => service.verifyRefreshToken(token)).toThrow();
   });
 });

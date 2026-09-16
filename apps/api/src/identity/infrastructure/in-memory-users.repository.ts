@@ -21,7 +21,9 @@ export class InMemoryUsersRepository implements UsersRepositoryPort {
     return Promise.resolve(null);
   }
 
-  findById(id: string): Promise<User | null> {
-    return Promise.resolve(this.users.get(id) ?? null);
+  findById(tenantId: string, id: string): Promise<User | null> {
+    const user = this.users.get(id);
+    if (!user || user.tenantId !== tenantId) return Promise.resolve(null);
+    return Promise.resolve(user);
   }
 }
