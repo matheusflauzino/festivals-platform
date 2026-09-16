@@ -12,6 +12,16 @@ describe('PrismaUsersRepository (integration)', () => {
     prisma = new PrismaService();
     await prisma.onModuleInit();
     repository = new PrismaUsersRepository(prisma);
+
+    await prisma.tenant.create({
+      data: {
+        id: tenantId,
+        name: 'Users Repo Integration Test Tenant',
+        document: 'IT987654321098',
+        slug: 'users-repo-integration-test-tenant',
+        status: 'ACTIVE',
+      },
+    });
   });
 
   afterEach(async () => {
@@ -19,6 +29,7 @@ describe('PrismaUsersRepository (integration)', () => {
   });
 
   afterAll(async () => {
+    await prisma.tenant.deleteMany({ where: { id: tenantId } });
     await prisma.onModuleDestroy();
   });
 

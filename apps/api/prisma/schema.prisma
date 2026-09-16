@@ -20,6 +20,7 @@ model Tenant {
   status    TenantStatus @default(ACTIVE)
   createdAt DateTime     @default(now()) @map("created_at")
   updatedAt DateTime     @updatedAt @map("updated_at")
+  users     User[]
 
   @@map("tenants")
 }
@@ -27,6 +28,7 @@ model Tenant {
 model User {
   id           String   @id @default(uuid())
   tenantId     String   @map("tenant_id")
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
   name         String
   email        String
   cpf          String
