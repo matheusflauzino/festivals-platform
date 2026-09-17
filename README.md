@@ -1,0 +1,9 @@
+## Local Setup
+
+1. `cp .env.example .env` and `cp apps/web/.env.example apps/web/.env.local`
+2. `docker compose up -d mysql`
+3. `pnpm install`
+4. `cd apps/api && pnpm exec prisma migrate deploy && pnpm exec prisma generate && cd ../..`
+5. `cd apps/api && pnpm run seed:admin && cd ../..` — creates a tenant (`fenac`) and its first ORGANIZER admin (`admin@fenac.local`), printing a generated password. There is no HTTP endpoint to do this — see `apps/api/scripts/seed-admin.ts` for why.
+6. `pnpm --filter api run start:dev` (or `docker compose up api`) and, in another terminal, `pnpm --filter web dev`
+7. Open `http://localhost:3000/login` and sign in with the email/password from step 5.
