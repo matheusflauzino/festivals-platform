@@ -12,10 +12,10 @@ export function BrandMark({ className = '' }: { className?: string }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx="20" cy="20" r="19" stroke="var(--color-cedar)" strokeWidth="1.5" />
-      <circle cx="20" cy="20" r="13" stroke="var(--color-viola)" strokeWidth="1.5" />
-      <circle cx="20" cy="20" r="7" stroke="var(--color-cedar)" strokeWidth="1.5" />
-      <circle cx="20" cy="20" r="2" fill="var(--color-viola)" />
+      <circle cx="20" cy="20" r="19" stroke="var(--color-accent)" strokeWidth="1.5" />
+      <circle cx="20" cy="20" r="13" stroke="var(--color-brand)" strokeWidth="1.5" />
+      <circle cx="20" cy="20" r="7" stroke="var(--color-accent)" strokeWidth="1.5" />
+      <circle cx="20" cy="20" r="2" fill="var(--color-brand)" />
     </svg>
   );
 }
@@ -24,7 +24,7 @@ export function BrandWordmark({ className = '' }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <BrandMark className="h-8 w-8 shrink-0" />
-      <span className="font-display text-lg font-semibold tracking-tight text-ink">FENAC</span>
+      <span className="text-lg font-semibold tracking-tight text-text">FENAC</span>
     </div>
   );
 }

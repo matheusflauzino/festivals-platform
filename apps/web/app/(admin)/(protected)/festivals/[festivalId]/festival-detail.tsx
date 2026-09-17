@@ -72,10 +72,12 @@ export function FestivalDetail({ festivalId }: { festivalId: string }) {
         action={
           <div className="flex items-center gap-3">
             <FestivalStatusBadge status={festival.status} />
-            <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
-              <PencilIcon className="h-4 w-4" />
-              Editar
-            </Button>
+            {festival.status !== 'CLOSED' && (
+              <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+                <PencilIcon className="h-4 w-4" />
+                Editar
+              </Button>
+            )}
             {festival.status === 'DRAFT' && (
               <Button size="sm" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
                 Publicar
@@ -92,9 +94,6 @@ export function FestivalDetail({ festivalId }: { festivalId: string }) {
 
       <FieldError>
         {publishMutation.isError ? getApiErrorMessage(publishMutation.error, 'Erro ao publicar festival.') : undefined}
-      </FieldError>
-      <FieldError>
-        {closeMutation.isError ? getApiErrorMessage(closeMutation.error, 'Erro ao fechar festival.') : undefined}
       </FieldError>
 
       <Card>
@@ -140,6 +139,7 @@ export function FestivalDetail({ festivalId }: { festivalId: string }) {
         confirmLabel="Fechar Festival"
         confirmVariant="danger"
         isConfirming={closeMutation.isPending}
+        error={closeMutation.isError ? getApiErrorMessage(closeMutation.error, 'Erro ao fechar festival.') : undefined}
         onConfirm={() => closeMutation.mutate()}
       />
 

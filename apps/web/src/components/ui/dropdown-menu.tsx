@@ -6,9 +6,10 @@ export interface DropdownMenuProps {
   trigger: ReactNode;
   children: ReactNode;
   align?: 'left' | 'right';
+  triggerLabel?: string;
 }
 
-export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMenuProps) {
+export function DropdownMenu({ trigger, children, align = 'right', triggerLabel }: DropdownMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +35,13 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
 
   return (
     <div ref={containerRef} className="relative">
-      <button type="button" onClick={() => setOpen((value) => !value)} aria-haspopup="menu" aria-expanded={open}>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={triggerLabel}
+      >
         {trigger}
       </button>
       {open && (

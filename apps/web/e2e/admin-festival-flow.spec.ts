@@ -25,7 +25,7 @@ test('organizer logs in, creates a festival, and publishes it', async ({ page })
   await page.getByLabel('Valor da inscrição').fill('10');
   await page.getByRole('button', { name: 'Criar Festival' }).click();
 
-  await expect(page.getByText('Festival de Teste E2E')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Festival de Teste E2E' })).toBeVisible();
   await expect(page.getByText('DRAFT')).toBeVisible();
 
   await page.getByRole('button', { name: 'Publicar' }).click();

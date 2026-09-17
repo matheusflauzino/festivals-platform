@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { Modal } from './modal';
 import { Button, type ButtonVariant } from './button';
 
@@ -12,6 +13,7 @@ export interface ConfirmModalProps {
   cancelLabel?: string;
   confirmVariant?: ButtonVariant;
   isConfirming?: boolean;
+  error?: ReactNode;
   onConfirm: () => void;
 }
 
@@ -24,10 +26,12 @@ export function ConfirmModal({
   cancelLabel = 'Cancelar',
   confirmVariant = 'primary',
   isConfirming = false,
+  error,
   onConfirm,
 }: ConfirmModalProps) {
   return (
     <Modal open={open} onOpenChange={onOpenChange} title={title} description={description}>
+      {error && <div className="mb-3 text-sm text-status-closed-fg">{error}</div>}
       <div className="flex justify-end gap-3">
         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
           {cancelLabel}

@@ -16,10 +16,10 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-mist p-6 text-center">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-canvas p-6 text-center">
       <BrandMark className="h-10 w-10 opacity-60" />
-      <h2 className="font-display text-lg font-semibold text-ink">Algo deu errado.</h2>
-      <p className="text-sm text-graphite">Ocorreu um erro inesperado. Você pode tentar novamente.</p>
+      <h2 className="text-lg font-semibold text-text">Algo deu errado.</h2>
+      <p className="text-sm text-text-muted">Ocorreu um erro inesperado. Você pode tentar novamente.</p>
       <Button onClick={() => reset()}>Tentar novamente</Button>
     </div>
   );

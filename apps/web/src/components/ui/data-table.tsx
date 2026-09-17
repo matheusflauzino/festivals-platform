@@ -73,7 +73,14 @@ export function DataTable<T>({
           <Skeleton className="h-9 w-full" />
         </div>
       ) : filteredRows.length === 0 ? (
-        <EmptyState title={emptyTitle} description={emptyDescription} />
+        query.trim() !== '' ? (
+          <EmptyState
+            title="Nenhum resultado encontrado"
+            description={`Nenhum item corresponde a "${query.trim()}".`}
+          />
+        ) : (
+          <EmptyState title={emptyTitle} description={emptyDescription} />
+        )
       ) : (
         <Table>
           <TableHead>

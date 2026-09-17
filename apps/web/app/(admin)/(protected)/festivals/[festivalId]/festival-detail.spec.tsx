@@ -70,6 +70,7 @@ describe('FestivalDetail', () => {
     expect(await screen.findByRole('heading', { name: 'FENAC 2026' })).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Publicar' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Fechar' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull();
   });
 
   it('clicking "Publicar" calls publishFestival and refetches', async () => {
@@ -125,12 +126,13 @@ describe('FestivalDetail', () => {
     vi.mocked(festivalsApi.getFestival).mockResolvedValue(draftFestival);
     vi.mocked(festivalsApi.listStages).mockResolvedValue([
       { id: 's1', festivalId: 'f1', name: 'Classificatória', order: 1, advancementQuota: null },
+      { id: 's2', festivalId: 'f1', name: 'Final', order: 2, advancementQuota: null },
     ]);
 
     renderWithQueryClient(<FestivalDetail festivalId="f1" />);
     await screen.findByRole('heading', { name: 'FENAC 2026' });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Novo Critério' }));
+    await userEvent.click(screen.getAllByRole('button', { name: 'Novo Critério' })[1]);
     expect(screen.getByRole('dialog', { name: 'Novo Critério de Nota' })).toBeDefined();
   });
 });

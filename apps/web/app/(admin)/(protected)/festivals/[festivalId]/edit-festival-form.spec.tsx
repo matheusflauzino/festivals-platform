@@ -75,5 +75,43 @@ describe('EditFestivalForm', () => {
       ),
     );
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+
+    // Regression check: the date fields were never touched by the user, so the
+    // submitted registrationBegin/registrationEnd must round-trip to the exact
+    // same UTC instant as the original fixture — not shifted by the local
+    // timezone offset (see toDateTimeLocal in edit-festival-form.tsx).
+    const [, , submittedValues] = vi.mocked(festivalsApi.updateFestival).mock.calls[0];
+    expect(new Date(submittedValues.registrationBegin).getTime()).toBe(
+      new Date(festival.registrationBegin).getTime(),
+    );
+    expect(new Date(submittedValues.registrationEnd).getTime()).toBe(new Date(festival.registrationEnd).getTime());
+  });
+
+  it('pre-fills the date inputs with the correct local-time digits (round-trips to the same UTC instant)', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      status: 'authenticated',
+      admin: { id: '1', name: 'Ana', email: 'ana@example.com', role: 'ORGANIZER' },
+      accessToken: 'token-1',
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    renderWithQueryClient(<EditFestivalForm festival={festival} open onOpenChange={vi.fn()} />);
+
+    function toLocalDateTimeDigits(isoString: string): string {
+      const date = new Date(isoString);
+      return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+    }
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Início das inscrições')).toHaveProperty(
+        'value',
+        toLocalDateTimeDigits(festival.registrationBegin),
+      ),
+    );
+    expect(screen.getByLabelText('Fim das inscrições')).toHaveProperty(
+      'value',
+      toLocalDateTimeDigits(festival.registrationEnd),
+    );
   });
 });

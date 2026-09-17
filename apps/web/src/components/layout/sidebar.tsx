@@ -65,6 +65,8 @@ export function Sidebar() {
                       <Link
                         href={item.href}
                         aria-current={isActive ? 'page' : undefined}
+                        aria-label={collapsed ? item.label : undefined}
+                        title={item.label}
                         onClick={() => setMobileOpen(false)}
                         className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                           isActive
@@ -85,6 +87,7 @@ export function Sidebar() {
         <button
           type="button"
           onClick={toggleCollapsed}
+          aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
           className="flex shrink-0 items-center justify-center gap-2 border-t border-border py-3 text-sm text-text-muted hover:text-text"
         >
           <ChevronLeftIcon className={`h-4 w-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />

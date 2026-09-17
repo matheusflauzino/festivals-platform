@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { CloseIcon } from './icons';
 
@@ -15,6 +15,8 @@ export interface ModalProps {
 
 export function Modal({ open, onOpenChange, title, description, children, className = '' }: ModalProps) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -33,6 +35,25 @@ export function Modal({ open, onOpenChange, title, description, children, classN
     };
   }, [open, onOpenChange]);
 
+  // Move focus into the dialog on open, and restore it to whatever was
+  // focused before opening once the dialog closes. This is a minimal focus
+  // management fix — it does not implement a full Tab-cycle focus trap.
+  useEffect(() => {
+    if (!open) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    // If a child already grabbed focus (e.g. an input with `autoFocus`),
+    // don't fight it — only focus the dialog container as a fallback.
+    if (dialogRef.current && !dialogRef.current.contains(document.activeElement)) {
+      dialogRef.current.focus();
+    }
+
+    return () => {
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return createPortal(
@@ -44,9 +65,11 @@ export function Modal({ open, onOpenChange, title, description, children, classN
         aria-hidden="true"
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         className={`relative w-full max-w-lg rounded-2xl border border-border bg-surface p-6 shadow-xl ${className}`}
       >
         <div className="flex items-start justify-between gap-4">

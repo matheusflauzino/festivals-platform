@@ -50,6 +50,7 @@ export function Header() {
         <ThemeToggle />
 
         <DropdownMenu
+          triggerLabel="Notificações"
           trigger={
             <span className="relative rounded-lg p-2 text-text-muted hover:bg-surface-muted">
               <BellIcon className="h-5 w-5" />
@@ -60,6 +61,7 @@ export function Header() {
         </DropdownMenu>
 
         <DropdownMenu
+          triggerLabel="Menu do usuário"
           trigger={
             <span className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-surface-muted">
               <Avatar name={admin?.name ?? '?'} />

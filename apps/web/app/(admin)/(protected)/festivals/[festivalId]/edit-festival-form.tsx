@@ -14,7 +14,9 @@ import { FormModal } from '../../../../../src/components/ui/form-modal';
 type EditFestivalFormValues = z.input<typeof updateFestivalSchema>;
 
 function toDateTimeLocal(isoString: string): string {
-  return isoString ? isoString.slice(0, 16) : '';
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 }
 
 export function EditFestivalForm({

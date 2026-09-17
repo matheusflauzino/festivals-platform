@@ -19,6 +19,19 @@ const COLUMNS: DataTableColumn<Festival>[] = [
       </Link>
     ),
   },
+  {
+    header: 'Período de Inscrição',
+    render: (festival) => {
+      const format = (iso: string) =>
+        new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return `${format(festival.registrationBegin)} a ${format(festival.registrationEnd)}`;
+    },
+  },
+  {
+    header: 'Taxa',
+    render: (festival) =>
+      festival.inscriptionFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+  },
   { header: 'Status', render: (festival) => <FestivalStatusBadge status={festival.status} /> },
 ];
 
