@@ -8,6 +8,9 @@ import { createGradeCriterionSchema, type CreateGradeCriterionDto } from '@fenac
 import { useAuth } from '../../../../../../../../../src/lib/auth/auth-context';
 import { createGradeCriterion } from '../../../../../../../../../src/lib/api/festivals';
 import { getApiErrorMessage } from '../../../../../../../../../src/lib/api/error-message';
+import { Field, FieldError, Input, Label } from '../../../../../../../../../src/components/ui/field';
+import { Button } from '../../../../../../../../../src/components/ui/button';
+import { PageHeader } from '../../../../../../../../../src/components/ui/page-header';
 
 export function CreateGradeCriterionForm({
   stageId,
@@ -35,43 +38,34 @@ export function CreateGradeCriterionForm({
   });
 
   return (
-    <form
-      onSubmit={handleSubmit((values) => mutation.mutate(values))}
-      className="flex max-w-lg flex-col gap-4"
-    >
-      <h1 className="text-xl font-semibold">Novo Critério de Nota</h1>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="name">Nome</label>
-        <input id="name" type="text" className="rounded border border-gray-300 px-3 py-2" {...register('name')} />
-        {errors.name && <p className="text-sm text-red-600">{errors.name.message}</p>}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="weight">Peso</label>
-        <input
-          id="weight"
-          type="number"
-          step="0.01"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('weight', { valueAsNumber: true })}
-        />
-        {errors.weight && <p className="text-sm text-red-600">{errors.weight.message}</p>}
-      </div>
-
-      {mutation.isError && (
-        <p className="text-sm text-red-600">
-          {getApiErrorMessage(mutation.error, 'Erro ao criar critério de nota.')}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={isSubmitting || mutation.isPending}
-        className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Novo Critério de Nota" />
+      <form
+        onSubmit={handleSubmit((values) => mutation.mutate(values))}
+        className="flex max-w-lg flex-col gap-4 rounded-xl border border-sky bg-white p-6"
       >
-        Criar Critério
-      </button>
-    </form>
+        <Field>
+          <Label htmlFor="name">Nome</Label>
+          <Input id="name" type="text" {...register('name')} />
+          <FieldError>{errors.name?.message}</FieldError>
+        </Field>
+
+        <Field>
+          <Label htmlFor="weight">Peso</Label>
+          <Input id="weight" type="number" step="0.01" {...register('weight', { valueAsNumber: true })} />
+          <FieldError>{errors.weight?.message}</FieldError>
+        </Field>
+
+        <FieldError>
+          {mutation.isError
+            ? getApiErrorMessage(mutation.error, 'Erro ao criar critério de nota.')
+            : undefined}
+        </FieldError>
+
+        <Button type="submit" disabled={isSubmitting || mutation.isPending}>
+          Criar Critério
+        </Button>
+      </form>
+    </div>
   );
 }

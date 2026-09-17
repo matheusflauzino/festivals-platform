@@ -1,26 +1,55 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base palette — a cool blue-to-violet ramp, one warm accent reserved
+     for the brand mark only (never for interactive UI). */
+  --color-mist: #f2f7ff;
+  --color-sky: #c9dcff;
+  --color-periwinkle: #b2c9ff;
+  --color-orchid: #be99ff;
+  --color-viola: #9d71e8;
+  --color-viola-strong: #7d4fd1;
+  --color-ink: #241b36;
+  --color-graphite: #6b6478;
+  --color-cedar: #c97b4a;
+
+  /* Status — tinted to sit beside the violet family instead of stock
+     traffic-light red/green. */
+  --color-status-draft-bg: #ece9f7;
+  --color-status-draft-fg: #5c5570;
+  --color-status-open-bg: #dcf5ec;
+  --color-status-open-fg: #16805f;
+  --color-status-closed-bg: #fbe7ee;
+  --color-status-closed-fg: #a23a5c;
+
+  --background: var(--color-mist);
+  --foreground: var(--color-ink);
 }
 
 @theme inline {
+  --color-mist: var(--color-mist);
+  --color-sky: var(--color-sky);
+  --color-periwinkle: var(--color-periwinkle);
+  --color-orchid: var(--color-orchid);
+  --color-viola: var(--color-viola);
+  --color-viola-strong: var(--color-viola-strong);
+  --color-ink: var(--color-ink);
+  --color-graphite: var(--color-graphite);
+  --color-cedar: var(--color-cedar);
+  --color-status-draft-bg: var(--color-status-draft-bg);
+  --color-status-draft-fg: var(--color-status-draft-fg);
+  --color-status-open-bg: var(--color-status-open-bg);
+  --color-status-open-fg: var(--color-status-open-fg);
+  --color-status-closed-bg: var(--color-status-closed-bg);
+  --color-status-closed-fg: var(--color-status-closed-fg);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-fraunces);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }

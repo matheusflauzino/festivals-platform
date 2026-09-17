@@ -9,6 +9,9 @@ import { createFestivalSchema } from '@fenac-platform/contracts';
 import { useAuth } from '../../../../../src/lib/auth/auth-context';
 import { createFestival } from '../../../../../src/lib/api/festivals';
 import { getApiErrorMessage } from '../../../../../src/lib/api/error-message';
+import { Field, FieldError, Input, Label } from '../../../../../src/components/ui/field';
+import { Button } from '../../../../../src/components/ui/button';
+import { PageHeader } from '../../../../../src/components/ui/page-header';
 
 type CreateFestivalFormValues = z.input<typeof createFestivalSchema>;
 
@@ -34,98 +37,61 @@ export function CreateFestivalForm() {
   });
 
   return (
-    <form
-      onSubmit={handleSubmit((values) => mutation.mutate(values))}
-      className="flex max-w-lg flex-col gap-4"
-    >
-      <h1 className="text-xl font-semibold">Novo Festival</h1>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="number">Número</label>
-        <input
-          id="number"
-          type="number"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('number', { valueAsNumber: true })}
-        />
-        {errors.number && <p className="text-sm text-red-600">{errors.number.message}</p>}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="year">Ano</label>
-        <input
-          id="year"
-          type="number"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('year', { valueAsNumber: true })}
-        />
-        {errors.year && <p className="text-sm text-red-600">{errors.year.message}</p>}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="name">Nome</label>
-        <input
-          id="name"
-          type="text"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('name')}
-        />
-        {errors.name && <p className="text-sm text-red-600">{errors.name.message}</p>}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="registrationBegin">Início das inscrições</label>
-        <input
-          id="registrationBegin"
-          type="datetime-local"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('registrationBegin')}
-        />
-        {errors.registrationBegin && (
-          <p className="text-sm text-red-600">{errors.registrationBegin.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="registrationEnd">Fim das inscrições</label>
-        <input
-          id="registrationEnd"
-          type="datetime-local"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('registrationEnd')}
-        />
-        {errors.registrationEnd && (
-          <p className="text-sm text-red-600">{errors.registrationEnd.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="inscriptionFee">Valor da inscrição</label>
-        <input
-          id="inscriptionFee"
-          type="number"
-          step="0.01"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('inscriptionFee', { valueAsNumber: true })}
-        />
-        {errors.inscriptionFee && (
-          <p className="text-sm text-red-600">{errors.inscriptionFee.message}</p>
-        )}
-      </div>
-
-      {mutation.isError && (
-        <p className="text-sm text-red-600">
-          {getApiErrorMessage(mutation.error, 'Erro ao criar festival.')}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={isSubmitting || mutation.isPending}
-        className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Novo Festival" />
+      <form
+        onSubmit={handleSubmit((values) => mutation.mutate(values))}
+        className="flex max-w-lg flex-col gap-4 rounded-xl border border-sky bg-white p-6"
       >
-        Criar Festival
-      </button>
-    </form>
+        <Field>
+          <Label htmlFor="number">Número</Label>
+          <Input id="number" type="number" {...register('number', { valueAsNumber: true })} />
+          <FieldError>{errors.number?.message}</FieldError>
+        </Field>
+
+        <Field>
+          <Label htmlFor="year">Ano</Label>
+          <Input id="year" type="number" {...register('year', { valueAsNumber: true })} />
+          <FieldError>{errors.year?.message}</FieldError>
+        </Field>
+
+        <Field>
+          <Label htmlFor="name">Nome</Label>
+          <Input id="name" type="text" {...register('name')} />
+          <FieldError>{errors.name?.message}</FieldError>
+        </Field>
+
+        <Field>
+          <Label htmlFor="registrationBegin">Início das inscrições</Label>
+          <Input id="registrationBegin" type="datetime-local" {...register('registrationBegin')} />
+          <FieldError>{errors.registrationBegin?.message}</FieldError>
+        </Field>
+
+        <Field>
+          <Label htmlFor="registrationEnd">Fim das inscrições</Label>
+          <Input id="registrationEnd" type="datetime-local" {...register('registrationEnd')} />
+          <FieldError>{errors.registrationEnd?.message}</FieldError>
+        </Field>
+
+        <Field>
+          <Label htmlFor="inscriptionFee">Valor da inscrição</Label>
+          <Input
+            id="inscriptionFee"
+            type="number"
+            step="0.01"
+            {...register('inscriptionFee', { valueAsNumber: true })}
+          />
+          <FieldError>{errors.inscriptionFee?.message}</FieldError>
+        </Field>
+
+        <FieldError>
+          {mutation.isError ? getApiErrorMessage(mutation.error, 'Erro ao criar festival.') : undefined}
+        </FieldError>
+
+        <Button type="submit" disabled={isSubmitting || mutation.isPending}>
+          Criar Festival
+        </Button>
+      </form>
+    </div>
   );
 }

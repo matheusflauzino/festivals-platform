@@ -11,6 +11,9 @@ import {
 } from '../../../../../src/lib/api/festivals';
 import { FestivalStatusBadge } from '../../../../../src/components/festival-status-badge';
 import { getApiErrorMessage } from '../../../../../src/lib/api/error-message';
+import { Button, buttonStyles } from '../../../../../src/components/ui/button';
+import { FieldError } from '../../../../../src/components/ui/field';
+import { StringDivider } from '../../../../../src/components/string-divider';
 
 export function FestivalDetail({ festivalId }: { festivalId: string }) {
   const { accessToken } = useAuth();
@@ -44,74 +47,71 @@ export function FestivalDetail({ festivalId }: { festivalId: string }) {
     },
   });
 
-  if (festivalQuery.isLoading) return <p>Carregando…</p>;
-  if (!festivalQuery.data) return <p>Festival não encontrado.</p>;
+  if (festivalQuery.isLoading) return <p className="text-sm text-graphite">Carregando…</p>;
+  if (!festivalQuery.data) return <p className="text-sm text-graphite">Festival não encontrado.</p>;
 
   const festival = festivalQuery.data;
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">{festival.name}</h1>
-          <p className="text-gray-500">
+          <h1 className="font-display text-2xl font-semibold text-ink">{festival.name}</h1>
+          <p className="text-sm text-graphite">
             {festival.number}/{festival.year}
           </p>
         </div>
         <FestivalStatusBadge status={festival.status} />
       </div>
+      <StringDivider />
 
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         {festival.status === 'DRAFT' && (
-          <button
-            onClick={() => publishMutation.mutate()}
-            disabled={publishMutation.isPending}
-            className="rounded bg-green-700 px-4 py-2 text-white disabled:opacity-50"
-          >
+          <Button onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
             Publicar
-          </button>
+          </Button>
         )}
         {festival.status === 'OPEN' && (
-          <button
+          <Button
+            variant="danger"
             onClick={() => closeMutation.mutate()}
             disabled={closeMutation.isPending}
-            className="rounded bg-red-700 px-4 py-2 text-white disabled:opacity-50"
           >
             Fechar
-          </button>
+          </Button>
         )}
       </div>
 
-      {publishMutation.isError && (
-        <p className="text-sm text-red-600">
-          {getApiErrorMessage(publishMutation.error, 'Erro ao publicar festival.')}
-        </p>
-      )}
-      {closeMutation.isError && (
-        <p className="text-sm text-red-600">
-          {getApiErrorMessage(closeMutation.error, 'Erro ao fechar festival.')}
-        </p>
-      )}
+      <FieldError>
+        {publishMutation.isError
+          ? getApiErrorMessage(publishMutation.error, 'Erro ao publicar festival.')
+          : undefined}
+      </FieldError>
+      <FieldError>
+        {closeMutation.isError
+          ? getApiErrorMessage(closeMutation.error, 'Erro ao fechar festival.')
+          : undefined}
+      </FieldError>
 
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-3 rounded-xl border border-sky bg-white p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium">Fases</h2>
-          <Link
-            href={`/festivals/${festivalId}/stages/new`}
-            className="rounded border border-gray-300 px-3 py-1 text-sm"
-          >
+          <h2 className="font-display text-lg font-semibold text-ink">Fases</h2>
+          <Link href={`/festivals/${festivalId}/stages/new`} className={buttonStyles('secondary')}>
             Nova Fase
           </Link>
         </div>
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col">
           {(stagesQuery.data ?? []).map((stage) => (
-            <li key={stage.id} className="flex items-center justify-between border-b border-gray-100 py-2">
-              <span>
+            <li
+              key={stage.id}
+              className="flex items-center justify-between border-b border-sky/60 py-3 last:border-0"
+            >
+              <span className="text-sm text-ink">
                 {stage.order}. {stage.name}
               </span>
               <Link
                 href={`/festivals/${festivalId}/stages/${stage.id}/grade-criteria/new`}
-                className="text-sm text-slate-700 underline"
+                className="text-sm font-medium text-viola-strong hover:underline"
               >
                 Novo Critério
               </Link>
