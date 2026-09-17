@@ -2,10 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ProtectedLayout from './layout';
 import { useAuth } from '../../../src/lib/auth/auth-context';
+import { ThemeProvider } from '../../../src/components/layout/theme-provider';
 
 vi.mock('../../../src/lib/auth/auth-context');
 const mockPush = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+  usePathname: () => '/festivals',
+}));
 
 describe('ProtectedLayout', () => {
   it('redirects to /login when unauthenticated', () => {
@@ -17,7 +21,11 @@ describe('ProtectedLayout', () => {
       logout: vi.fn(),
     });
 
-    render(<ProtectedLayout>{'content'}</ProtectedLayout>);
+    render(
+      <ThemeProvider>
+        <ProtectedLayout>{'content'}</ProtectedLayout>
+      </ThemeProvider>,
+    );
 
     expect(mockPush).toHaveBeenCalledWith('/login');
   });
@@ -31,7 +39,11 @@ describe('ProtectedLayout', () => {
       logout: vi.fn(),
     });
 
-    render(<ProtectedLayout>{'content'}</ProtectedLayout>);
+    render(
+      <ThemeProvider>
+        <ProtectedLayout>{'content'}</ProtectedLayout>
+      </ThemeProvider>,
+    );
 
     expect(mockPush).not.toHaveBeenCalled();
     expect(screen.getByText(/carregando/i)).toBeDefined();
@@ -46,7 +58,11 @@ describe('ProtectedLayout', () => {
       logout: vi.fn(),
     });
 
-    render(<ProtectedLayout>{'festival list here'}</ProtectedLayout>);
+    render(
+      <ThemeProvider>
+        <ProtectedLayout>{'festival list here'}</ProtectedLayout>
+      </ThemeProvider>,
+    );
 
     expect(screen.getByText('festival list here')).toBeDefined();
     expect(screen.getByText('Ana')).toBeDefined();

@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../src/lib/auth/auth-context';
-import { DashboardShell } from '../../../src/components/dashboard-shell';
+import { AppShell } from '../../../src/components/layout/app-shell';
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const { status } = useAuth();
@@ -27,5 +27,5 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     return null;
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  return <AppShell>{children}</AppShell>;
 }
