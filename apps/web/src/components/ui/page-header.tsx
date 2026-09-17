@@ -1,25 +1,27 @@
 import type { ReactNode } from 'react';
-import { StringDivider } from '../string-divider';
+import { Breadcrumb, type BreadcrumbItem } from './breadcrumb';
 
 export function PageHeader({
   title,
   subtitle,
   action,
+  breadcrumb,
 }: {
   title: string;
   subtitle?: ReactNode;
   action?: ReactNode;
+  breadcrumb?: BreadcrumbItem[];
 }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">{title}</h1>
-          {subtitle && <div className="mt-1 text-sm text-graphite">{subtitle}</div>}
-        </div>
+    <div className="mb-6 flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h1 className="text-2xl font-semibold text-text">{title}</h1>
+        {subtitle && <div className="mt-1 text-sm text-text-muted">{subtitle}</div>}
+      </div>
+      <div className="flex flex-col items-start gap-3 sm:items-end">
+        {breadcrumb && <Breadcrumb items={breadcrumb} />}
         {action}
       </div>
-      <StringDivider />
     </div>
   );
 }
