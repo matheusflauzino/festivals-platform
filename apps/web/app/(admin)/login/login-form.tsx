@@ -44,7 +44,7 @@ export function LoginForm() {
         <FieldError>{errors.password?.message}</FieldError>
       </Field>
       <FieldError>{submitError ?? undefined}</FieldError>
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <Button type="submit" loading={isSubmitting} className="w-full">
         Entrar
       </Button>
     </form>
