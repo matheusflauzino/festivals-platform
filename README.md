@@ -5,5 +5,6 @@
 3. `pnpm install`
 4. `cd apps/api && pnpm exec prisma migrate deploy && pnpm exec prisma generate && cd ../..`
 5. `cd apps/api && pnpm run seed:admin && cd ../..` — creates a tenant (`fenac`) and its first ORGANIZER admin (`admin@fenac.local`), printing a generated password. There is no HTTP endpoint to do this — see `apps/api/scripts/seed-admin.ts` for why.
+   - To run the Playwright smoke test, re-seed with a known password: `SEED_ADMIN_PASSWORD=test-password-123 pnpm --filter api run seed:admin` (only works before the admin already exists — the script is idempotent and won't overwrite an existing admin's password).
 6. `pnpm --filter api run start:dev` (or `docker compose up api`) and, in another terminal, `pnpm --filter web dev`
 7. Open `http://localhost:3000/login` and sign in with the email/password from step 5.
