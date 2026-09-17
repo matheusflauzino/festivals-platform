@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     env: {
       NEXT_PUBLIC_API_URL: 'http://localhost:3001',
       NEXT_PUBLIC_TENANT_SLUG: 'fenac',
