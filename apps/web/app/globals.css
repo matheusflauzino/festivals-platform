@@ -1,55 +1,77 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* Base palette — a cool blue-to-violet ramp, one warm accent reserved
-     for the brand mark only (never for interactive UI). */
-  --color-mist: #f2f7ff;
-  --color-sky: #c9dcff;
-  --color-periwinkle: #b2c9ff;
-  --color-orchid: #be99ff;
-  --color-viola: #9d71e8;
-  --color-viola-strong: #7d4fd1;
-  --color-ink: #241b36;
-  --color-graphite: #6b6478;
-  --color-cedar: #c97b4a;
+  --color-canvas: #f9fafb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f3f4f6;
+  --color-border: #e5e7eb;
+  --color-text: #1f1b2c;
+  --color-text-muted: #6b6478;
+  --color-text-subtle: #9ca3af;
+  --color-brand: #7d4fd1;
+  --color-brand-strong: #6a3db8;
+  --color-brand-soft: #f1ebfc;
+  --color-accent: #c97b4a;
 
-  /* Status — tinted to sit beside the violet family instead of stock
-     traffic-light red/green. */
   --color-status-draft-bg: #ece9f7;
   --color-status-draft-fg: #5c5570;
   --color-status-open-bg: #dcf5ec;
   --color-status-open-fg: #16805f;
   --color-status-closed-bg: #fbe7ee;
   --color-status-closed-fg: #a23a5c;
+  --color-status-warning-bg: #fef3e2;
+  --color-status-warning-fg: #b45309;
+}
 
-  --background: var(--color-mist);
-  --foreground: var(--color-ink);
+.dark {
+  --color-canvas: #14121f;
+  --color-surface: #1c1930;
+  --color-surface-muted: #241f3d;
+  --color-border: #322c4d;
+  --color-text: #f1eefb;
+  --color-text-muted: #a79fc2;
+  --color-text-subtle: #746c93;
+  --color-brand: #a78bfa;
+  --color-brand-strong: #c4b2ff;
+  --color-brand-soft: #2e2650;
+  --color-accent: #e08f5e;
+
+  --color-status-draft-bg: #2c2745;
+  --color-status-draft-fg: #c9c2e8;
+  --color-status-open-bg: #113b2e;
+  --color-status-open-fg: #6ee7b7;
+  --color-status-closed-bg: #3d1f2c;
+  --color-status-closed-fg: #f4a6c1;
+  --color-status-warning-bg: #3d2a12;
+  --color-status-warning-fg: #fbbf6b;
 }
 
 @theme inline {
-  --color-mist: var(--color-mist);
-  --color-sky: var(--color-sky);
-  --color-periwinkle: var(--color-periwinkle);
-  --color-orchid: var(--color-orchid);
-  --color-viola: var(--color-viola);
-  --color-viola-strong: var(--color-viola-strong);
-  --color-ink: var(--color-ink);
-  --color-graphite: var(--color-graphite);
-  --color-cedar: var(--color-cedar);
+  --color-canvas: var(--color-canvas);
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-subtle: var(--color-text-subtle);
+  --color-brand: var(--color-brand);
+  --color-brand-strong: var(--color-brand-strong);
+  --color-brand-soft: var(--color-brand-soft);
+  --color-accent: var(--color-accent);
   --color-status-draft-bg: var(--color-status-draft-bg);
   --color-status-draft-fg: var(--color-status-draft-fg);
   --color-status-open-bg: var(--color-status-open-bg);
   --color-status-open-fg: var(--color-status-open-fg);
   --color-status-closed-bg: var(--color-status-closed-bg);
   --color-status-closed-fg: var(--color-status-closed-fg);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-status-warning-bg: var(--color-status-warning-bg);
+  --color-status-warning-fg: var(--color-status-warning-fg);
   --font-sans: var(--font-manrope);
-  --font-display: var(--font-fraunces);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-canvas);
+  color: var(--color-text);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
