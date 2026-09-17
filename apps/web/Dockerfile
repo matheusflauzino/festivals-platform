@@ -2,8 +2,10 @@ FROM node:22-slim AS build
 WORKDIR /repo
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/web ./apps/web
+COPY packages/contracts ./packages/contracts
 RUN corepack enable && corepack use pnpm@latest
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @fenac-platform/contracts run build
 RUN pnpm --filter @fenac-platform/web run build
 
 # Runtime stage: same reasoning as apps/api/Dockerfile — pnpm's dependencies
@@ -16,6 +18,7 @@ RUN pnpm --filter @fenac-platform/web run build
 FROM node:22-slim AS runtime
 WORKDIR /repo
 COPY --from=build /repo/node_modules ./node_modules
+COPY --from=build /repo/packages/contracts ./packages/contracts
 COPY --from=build /repo/apps/web/.next ./apps/web/.next
 COPY --from=build /repo/apps/web/node_modules ./apps/web/node_modules
 COPY --from=build /repo/apps/web/public ./apps/web/public
