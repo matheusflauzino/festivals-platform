@@ -7,6 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import { createGradeCriterionSchema, type CreateGradeCriterionDto } from '@fenac-platform/contracts';
 import { useAuth } from '../../../../../../../../../src/lib/auth/auth-context';
 import { createGradeCriterion } from '../../../../../../../../../src/lib/api/festivals';
+import { getApiErrorMessage } from '../../../../../../../../../src/lib/api/error-message';
 
 export function CreateGradeCriterionForm({
   stageId,
@@ -57,6 +58,12 @@ export function CreateGradeCriterionForm({
         />
         {errors.weight && <p className="text-sm text-red-600">{errors.weight.message}</p>}
       </div>
+
+      {mutation.isError && (
+        <p className="text-sm text-red-600">
+          {getApiErrorMessage(mutation.error, 'Erro ao criar critério de nota.')}
+        </p>
+      )}
 
       <button
         type="submit"

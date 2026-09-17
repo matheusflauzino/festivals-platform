@@ -10,6 +10,7 @@ import {
   publishFestival,
 } from '../../../../../src/lib/api/festivals';
 import { FestivalStatusBadge } from '../../../../../src/components/festival-status-badge';
+import { getApiErrorMessage } from '../../../../../src/lib/api/error-message';
 
 export function FestivalDetail({ festivalId }: { festivalId: string }) {
   const { accessToken } = useAuth();
@@ -80,6 +81,17 @@ export function FestivalDetail({ festivalId }: { festivalId: string }) {
           </button>
         )}
       </div>
+
+      {publishMutation.isError && (
+        <p className="text-sm text-red-600">
+          {getApiErrorMessage(publishMutation.error, 'Erro ao publicar festival.')}
+        </p>
+      )}
+      {closeMutation.isError && (
+        <p className="text-sm text-red-600">
+          {getApiErrorMessage(closeMutation.error, 'Erro ao fechar festival.')}
+        </p>
+      )}
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">

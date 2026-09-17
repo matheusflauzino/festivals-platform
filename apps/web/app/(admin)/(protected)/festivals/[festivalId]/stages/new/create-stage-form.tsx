@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createStageSchema, type CreateStageDto } from '@fenac-platform/contracts';
 import { useAuth } from '../../../../../../../src/lib/auth/auth-context';
 import { createStage } from '../../../../../../../src/lib/api/festivals';
+import { getApiErrorMessage } from '../../../../../../../src/lib/api/error-message';
 
 export function CreateStageForm({ festivalId }: { festivalId: string }) {
   const { accessToken } = useAuth();
@@ -51,6 +52,12 @@ export function CreateStageForm({ festivalId }: { festivalId: string }) {
         />
         {errors.order && <p className="text-sm text-red-600">{errors.order.message}</p>}
       </div>
+
+      {mutation.isError && (
+        <p className="text-sm text-red-600">
+          {getApiErrorMessage(mutation.error, 'Erro ao criar fase.')}
+        </p>
+      )}
 
       <button
         type="submit"

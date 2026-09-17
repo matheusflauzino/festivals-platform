@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFestivalSchema } from '@fenac-platform/contracts';
 import { useAuth } from '../../../../../src/lib/auth/auth-context';
 import { createFestival } from '../../../../../src/lib/api/festivals';
+import { getApiErrorMessage } from '../../../../../src/lib/api/error-message';
 
 type CreateFestivalFormValues = z.input<typeof createFestivalSchema>;
 
@@ -114,7 +115,7 @@ export function CreateFestivalForm() {
 
       {mutation.isError && (
         <p className="text-sm text-red-600">
-          {mutation.error instanceof Error ? mutation.error.message : 'Erro ao criar festival.'}
+          {getApiErrorMessage(mutation.error, 'Erro ao criar festival.')}
         </p>
       )}
 
