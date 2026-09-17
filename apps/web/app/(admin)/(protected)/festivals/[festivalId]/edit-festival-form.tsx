@@ -2,6 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateFestivalSchema } from '@fenac-platform/contracts';
 import { useAuth } from '../../../../../src/lib/auth/auth-context';
@@ -10,12 +11,7 @@ import { getApiErrorMessage } from '../../../../../src/lib/api/error-message';
 import { Field, FieldError, Input, Label } from '../../../../../src/components/ui/field';
 import { FormModal } from '../../../../../src/components/ui/form-modal';
 
-interface EditFestivalFormValues {
-  name: string;
-  registrationBegin: string;
-  registrationEnd: string;
-  inscriptionFee: number;
-}
+type EditFestivalFormValues = z.input<typeof updateFestivalSchema>;
 
 function toDateTimeLocal(isoString: string): string {
   return isoString ? isoString.slice(0, 16) : '';

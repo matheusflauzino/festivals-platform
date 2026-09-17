@@ -16,6 +16,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads a browser-only API (document) that isn't available during SSR; must run in an effect, not a lazy initializer
     setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
   }, []);
 

@@ -18,6 +18,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads a browser-only API (localStorage) that isn't available during SSR; must run in an effect, not a lazy initializer
       setCollapsed(localStorage.getItem(STORAGE_KEY) === 'true');
     } catch {
       // ignore storage failures

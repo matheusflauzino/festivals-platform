@@ -10,6 +10,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   const router = useRouter();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets query only when `open` transitions to false, not during render; a lazy initializer can't observe that transition
     if (!open) setQuery('');
   }, [open]);
 
