@@ -21,7 +21,7 @@ export function DashboardView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Dashboard" breadcrumb={[{ label: 'Home' }]} />
+      <PageHeader title="Dashboard" breadcrumb={[{ label: 'Home' }, { label: 'Dashboard' }]} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Festivais cadastrados" value={total} icon={<CalendarIcon className="h-5 w-5" />} />
         <StatCard label="Festivais abertos" value={open} icon={<TrendingUpIcon className="h-5 w-5" />} />

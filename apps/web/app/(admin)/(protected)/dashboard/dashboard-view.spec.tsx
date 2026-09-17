@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DashboardView } from './dashboard-view';
 import { useAuth } from '../../../../src/lib/auth/auth-context';
@@ -31,7 +31,7 @@ describe('DashboardView', () => {
 
     renderWithQueryClient(<DashboardView />);
 
-    expect(await screen.findByText('Dashboard')).toBeDefined();
+    expect((await screen.findAllByText('Dashboard')).length).toBeGreaterThan(0);
     expect(await screen.findByText('4')).toBeDefined();
     expect(await screen.findByText('2')).toBeDefined();
     expect(screen.getByText('Festivais cadastrados')).toBeDefined();
