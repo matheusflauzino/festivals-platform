@@ -3,11 +3,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CreateStageForm } from './create-stage-form';
-import { useAuth } from '../../../../../../../src/lib/auth/auth-context';
-import * as festivalsApi from '../../../../../../../src/lib/api/festivals';
+import { useAuth } from '../../../../../src/lib/auth/auth-context';
+import * as festivalsApi from '../../../../../src/lib/api/festivals';
 
-vi.mock('../../../../../../../src/lib/auth/auth-context');
-vi.mock('../../../../../../../src/lib/api/festivals');
+vi.mock('../../../../../src/lib/auth/auth-context');
+vi.mock('../../../../../src/lib/api/festivals');
 const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
 
@@ -46,5 +46,44 @@ describe('CreateStageForm', () => {
       }),
     );
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/festivals/f1'));
+  });
+
+  it('calls onOpenChange(false) after a successful submit', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      status: 'authenticated',
+      admin: { id: '1', name: 'Ana', email: 'ana@example.com', role: 'ORGANIZER' },
+      accessToken: 'token-1',
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
+    vi.mocked(festivalsApi.createStage).mockResolvedValue({
+      id: 's1',
+      festivalId: 'f1',
+      name: 'Classificatória',
+      order: 1,
+      advancementQuota: null,
+    });
+    const onOpenChange = vi.fn();
+
+    renderWithQueryClient(<CreateStageForm festivalId="f1" open onOpenChange={onOpenChange} />);
+
+    await userEvent.type(screen.getByLabelText('Nome'), 'Classificatória');
+    await userEvent.type(screen.getByLabelText('Ordem'), '1');
+    await userEvent.click(screen.getByRole('button', { name: 'Criar Fase' }));
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it('renders nothing when open is false', () => {
+    vi.mocked(useAuth).mockReturnValue({
+      status: 'authenticated',
+      admin: { id: '1', name: 'Ana', email: 'ana@example.com', role: 'ORGANIZER' },
+      accessToken: 'token-1',
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    renderWithQueryClient(<CreateStageForm festivalId="f1" open={false} onOpenChange={vi.fn()} />);
+    expect(screen.queryByLabelText('Nome')).toBeNull();
   });
 });
