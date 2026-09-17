@@ -1,23 +1,28 @@
 'use client';
 
-import Link from 'next/link';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../../../../src/lib/auth/auth-context';
-import {
-  closeFestival,
-  getFestival,
-  listStages,
-  publishFestival,
-} from '../../../../../src/lib/api/festivals';
+import { closeFestival, getFestival, listStages, publishFestival } from '../../../../../src/lib/api/festivals';
 import { FestivalStatusBadge } from '../../../../../src/components/festival-status-badge';
 import { getApiErrorMessage } from '../../../../../src/lib/api/error-message';
-import { Button, buttonStyles } from '../../../../../src/components/ui/button';
+import { Button } from '../../../../../src/components/ui/button';
 import { FieldError } from '../../../../../src/components/ui/field';
-import { StringDivider } from '../../../../../src/components/string-divider';
+import { PageHeader } from '../../../../../src/components/ui/page-header';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../../src/components/ui/card';
+import { ConfirmModal } from '../../../../../src/components/ui/confirm-modal';
+import { PencilIcon, PlusIcon } from '../../../../../src/components/ui/icons';
+import { EditFestivalForm } from './edit-festival-form';
+import { CreateStageForm } from './create-stage-form';
+import { CreateGradeCriterionForm } from './stages/[stageId]/create-grade-criterion-form';
 
 export function FestivalDetail({ festivalId }: { festivalId: string }) {
   const { accessToken } = useAuth();
   const queryClient = useQueryClient();
+  const [editOpen, setEditOpen] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+  const [stageModalOpen, setStageModalOpen] = useState(false);
+  const [criterionStageId, setCriterionStageId] = useState<string | null>(null);
 
   const festivalQuery = useQuery({
     queryKey: ['festivals', festivalId],
@@ -44,81 +49,110 @@ export function FestivalDetail({ festivalId }: { festivalId: string }) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['festivals', festivalId] });
       void queryClient.invalidateQueries({ queryKey: ['festivals'] });
+      setCloseConfirmOpen(false);
     },
   });
 
-  if (festivalQuery.isLoading) return <p className="text-sm text-graphite">Carregando…</p>;
-  if (!festivalQuery.data) return <p className="text-sm text-graphite">Festival não encontrado.</p>;
+  if (festivalQuery.isLoading) return <p className="text-sm text-text-muted">Carregando…</p>;
+  if (!festivalQuery.data) return <p className="text-sm text-text-muted">Festival não encontrado.</p>;
 
   const festival = festivalQuery.data;
+  const stages = stagesQuery.data ?? [];
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">{festival.name}</h1>
-          <p className="text-sm text-graphite">
-            {festival.number}/{festival.year}
-          </p>
-        </div>
-        <FestivalStatusBadge status={festival.status} />
-      </div>
-      <StringDivider />
-
-      <div className="flex gap-3">
-        {festival.status === 'DRAFT' && (
-          <Button onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
-            Publicar
-          </Button>
-        )}
-        {festival.status === 'OPEN' && (
-          <Button
-            variant="danger"
-            onClick={() => closeMutation.mutate()}
-            disabled={closeMutation.isPending}
-          >
-            Fechar
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title={festival.name}
+        subtitle={`${festival.number}/${festival.year}`}
+        breadcrumb={[
+          { label: 'Home', href: '/dashboard' },
+          { label: 'Festivais', href: '/festivals' },
+          { label: festival.name },
+        ]}
+        action={
+          <div className="flex items-center gap-3">
+            <FestivalStatusBadge status={festival.status} />
+            <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+              <PencilIcon className="h-4 w-4" />
+              Editar
+            </Button>
+            {festival.status === 'DRAFT' && (
+              <Button size="sm" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
+                Publicar
+              </Button>
+            )}
+            {festival.status === 'OPEN' && (
+              <Button variant="danger" size="sm" onClick={() => setCloseConfirmOpen(true)}>
+                Fechar
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       <FieldError>
-        {publishMutation.isError
-          ? getApiErrorMessage(publishMutation.error, 'Erro ao publicar festival.')
-          : undefined}
+        {publishMutation.isError ? getApiErrorMessage(publishMutation.error, 'Erro ao publicar festival.') : undefined}
       </FieldError>
       <FieldError>
-        {closeMutation.isError
-          ? getApiErrorMessage(closeMutation.error, 'Erro ao fechar festival.')
-          : undefined}
+        {closeMutation.isError ? getApiErrorMessage(closeMutation.error, 'Erro ao fechar festival.') : undefined}
       </FieldError>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-sky bg-white p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-ink">Fases</h2>
-          <Link href={`/festivals/${festivalId}/stages/new`} className={buttonStyles('secondary')}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Fases</CardTitle>
+          <Button size="sm" variant="secondary" onClick={() => setStageModalOpen(true)}>
+            <PlusIcon className="h-4 w-4" />
             Nova Fase
-          </Link>
-        </div>
-        <ul className="flex flex-col">
-          {(stagesQuery.data ?? []).map((stage) => (
-            <li
-              key={stage.id}
-              className="flex items-center justify-between border-b border-sky/60 py-3 last:border-0"
-            >
-              <span className="text-sm text-ink">
-                {stage.order}. {stage.name}
-              </span>
-              <Link
-                href={`/festivals/${festivalId}/stages/${stage.id}/grade-criteria/new`}
-                className="text-sm font-medium text-viola-strong hover:underline"
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          {stages.length === 0 ? (
+            <p className="px-5 py-6 text-center text-sm text-text-muted">Nenhuma fase cadastrada ainda.</p>
+          ) : (
+            stages.map((stage) => (
+              <div
+                key={stage.id}
+                className="flex items-center justify-between border-b border-border px-5 py-3 last:border-0"
               >
-                Novo Critério
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+                <span className="text-sm text-text">
+                  {stage.order}. {stage.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCriterionStageId(stage.id)}
+                  className="text-sm font-medium text-brand hover:underline"
+                >
+                  Novo Critério
+                </button>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <EditFestivalForm festival={festival} open={editOpen} onOpenChange={setEditOpen} />
+
+      <ConfirmModal
+        open={closeConfirmOpen}
+        onOpenChange={setCloseConfirmOpen}
+        title="Fechar festival?"
+        description="As inscrições e avaliações deste festival serão encerradas. Essa ação não pode ser desfeita."
+        confirmLabel="Fechar Festival"
+        confirmVariant="danger"
+        isConfirming={closeMutation.isPending}
+        onConfirm={() => closeMutation.mutate()}
+      />
+
+      <CreateStageForm festivalId={festivalId} open={stageModalOpen} onOpenChange={setStageModalOpen} />
+
+      <CreateGradeCriterionForm
+        stageId={criterionStageId ?? ''}
+        festivalId={festivalId}
+        open={criterionStageId !== null}
+        onOpenChange={(open) => {
+          if (!open) setCriterionStageId(null);
+        }}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import * as festivalsApi from '../../../../../src/lib/api/festivals';
 
 vi.mock('../../../../../src/lib/auth/auth-context');
 vi.mock('../../../../../src/lib/api/festivals');
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 function renderWithQueryClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -46,7 +47,7 @@ describe('FestivalDetail', () => {
 
     renderWithQueryClient(<FestivalDetail festivalId="f1" />);
 
-    expect(await screen.findByText('FENAC 2026')).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'FENAC 2026' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Publicar' })).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Fechar' })).toBeNull();
   });
@@ -56,7 +57,7 @@ describe('FestivalDetail', () => {
 
     renderWithQueryClient(<FestivalDetail festivalId="f1" />);
 
-    expect(await screen.findByText('FENAC 2026')).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'FENAC 2026' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Fechar' })).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Publicar' })).toBeNull();
   });
@@ -66,7 +67,7 @@ describe('FestivalDetail', () => {
 
     renderWithQueryClient(<FestivalDetail festivalId="f1" />);
 
-    expect(await screen.findByText('FENAC 2026')).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'FENAC 2026' })).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Publicar' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Fechar' })).toBeNull();
   });
@@ -76,10 +77,60 @@ describe('FestivalDetail', () => {
     vi.mocked(festivalsApi.publishFestival).mockResolvedValue({ ...draftFestival, status: 'OPEN' });
 
     renderWithQueryClient(<FestivalDetail festivalId="f1" />);
-    await screen.findByText('FENAC 2026');
+    await screen.findByRole('heading', { name: 'FENAC 2026' });
 
     await userEvent.click(screen.getByRole('button', { name: 'Publicar' }));
 
     await waitFor(() => expect(festivalsApi.publishFestival).toHaveBeenCalledWith('token-1', 'f1'));
+  });
+
+  it('opens the edit modal when "Editar" is clicked, pre-filled with the current name', async () => {
+    vi.mocked(festivalsApi.getFestival).mockResolvedValue(draftFestival);
+
+    renderWithQueryClient(<FestivalDetail festivalId="f1" />);
+    await screen.findByRole('heading', { name: 'FENAC 2026' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Editar' }));
+
+    expect(screen.getByRole('dialog', { name: 'Editar Festival' })).toBeDefined();
+    await waitFor(() => expect(screen.getByLabelText('Nome')).toHaveProperty('value', 'FENAC 2026'));
+  });
+
+  it('requires confirmation before closing an OPEN festival', async () => {
+    vi.mocked(festivalsApi.getFestival).mockResolvedValue({ ...draftFestival, status: 'OPEN' });
+    vi.mocked(festivalsApi.closeFestival).mockResolvedValue({ ...draftFestival, status: 'CLOSED' });
+
+    renderWithQueryClient(<FestivalDetail festivalId="f1" />);
+    await screen.findByRole('heading', { name: 'FENAC 2026' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+    expect(festivalsApi.closeFestival).not.toHaveBeenCalled();
+    expect(screen.getByText('Fechar festival?')).toBeDefined();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Fechar Festival' }));
+    await waitFor(() => expect(festivalsApi.closeFestival).toHaveBeenCalledWith('token-1', 'f1'));
+  });
+
+  it('opens the Nova Fase modal from the stages card', async () => {
+    vi.mocked(festivalsApi.getFestival).mockResolvedValue(draftFestival);
+
+    renderWithQueryClient(<FestivalDetail festivalId="f1" />);
+    await screen.findByRole('heading', { name: 'FENAC 2026' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Nova Fase' }));
+    expect(screen.getByRole('dialog', { name: 'Nova Fase' })).toBeDefined();
+  });
+
+  it('opens the Novo Critério modal for the clicked stage', async () => {
+    vi.mocked(festivalsApi.getFestival).mockResolvedValue(draftFestival);
+    vi.mocked(festivalsApi.listStages).mockResolvedValue([
+      { id: 's1', festivalId: 'f1', name: 'Classificatória', order: 1, advancementQuota: null },
+    ]);
+
+    renderWithQueryClient(<FestivalDetail festivalId="f1" />);
+    await screen.findByRole('heading', { name: 'FENAC 2026' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Novo Critério' }));
+    expect(screen.getByRole('dialog', { name: 'Novo Critério de Nota' })).toBeDefined();
   });
 });
