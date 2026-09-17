@@ -80,4 +80,48 @@ describe('registerAuthInterceptors', () => {
     await expect(apiClient.get('/protected')).rejects.toBeInstanceOf(axios.AxiosError);
     expect(onAuthFailure).toHaveBeenCalled();
   });
+
+  it('does not recurse infinitely when the refresh request itself 401s (real refreshRequest, no mock)', async () => {
+    // Regression test for the unbounded refresh loop: refreshRequest() makes its
+    // POST through this SAME apiClient instance, which has this response
+    // interceptor registered. If the interceptor doesn't recognize that the
+    // failing request IS the refresh request, it will call refreshRequest()
+    // again, which 401s again, forever. The other tests in this file mock
+    // refreshRequest as a plain vi.fn(), which never re-enters the interceptor
+    // and so can never catch this bug. This test wires up the REAL
+    // refreshRequest so the request genuinely flows back through the
+    // interceptor a second time.
+    const { refreshRequest: realRefreshRequest } = await vi.importActual<typeof adminAuth>(
+      './admin-auth',
+    );
+    vi.mocked(adminAuth.refreshRequest).mockImplementation(realRefreshRequest);
+
+    const onAuthFailure = vi.fn();
+    registerAuthInterceptors(apiClient, {
+      getAccessToken: () => 'expired-token',
+      onTokenRefreshed: vi.fn(),
+      onAuthFailure,
+    });
+
+    let refreshHitCount = 0;
+    mock.onPost(/\/admin\/refresh$/).reply(() => {
+      refreshHitCount += 1;
+      return [401];
+    });
+    mock.onGet('/protected').reply(401);
+
+    // Race against a short timer: if the interceptor recurses infinitely,
+    // this request never settles and the timer wins, failing the test
+    // instead of hanging the whole suite.
+    const hangGuard = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('request did not settle: possible infinite recursion')), 2000);
+    });
+
+    await expect(Promise.race([apiClient.get('/protected'), hangGuard])).rejects.toBeInstanceOf(
+      axios.AxiosError,
+    );
+
+    expect(refreshHitCount).toBe(1);
+    expect(onAuthFailure).toHaveBeenCalledTimes(1);
+  });
 });

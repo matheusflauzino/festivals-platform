@@ -63,8 +63,19 @@ export function registerAuthInterceptors(
       const config = normalizedError.config as RetriableRequestConfig | undefined;
       const isUnauthorized = normalizedError.response?.status === 401;
       const alreadyRetried = config?._retried === true;
+      // The refresh endpoint itself is called through this same apiClient
+      // instance, so it hits this very interceptor. If the failing request
+      // IS the refresh request (its URL path ends with /admin/refresh — the
+      // backend returns 401 whenever the refresh cookie is missing, invalid,
+      // or expired, which is the common case for first-time visitors and
+      // anyone whose session lapsed), attempting another refresh-and-retry
+      // here would call refreshRequest() again, which 401s again, forever.
+      // Bail out immediately instead of recursing. Checking only the path
+      // suffix (not an exact URL) keeps this robust to base URL / tenant
+      // slug changes.
+      const isRefreshRequest = (config?.url ?? '').split('?')[0].endsWith('/admin/refresh');
 
-      if (!isUnauthorized || alreadyRetried || !config) {
+      if (!isUnauthorized || alreadyRetried || !config || isRefreshRequest) {
         return Promise.reject(normalizedError);
       }
 
