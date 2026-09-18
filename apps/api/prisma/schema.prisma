@@ -108,6 +108,7 @@ model Festival {
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
   stages            Stage[]
+  registrations     Registration[]
 
   @@unique([tenantId, number, year])
   @@map("festivals")
@@ -139,4 +140,23 @@ model GradeCriterion {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("grade_criteria")
+}
+
+model Registration {
+  id               String   @id @default(uuid())
+  tenantId         String   @map("tenant_id")
+  festivalId       String   @map("festival_id")
+  festival         Festival @relation(fields: [festivalId], references: [id])
+  participantName  String   @map("participant_name")
+  participantEmail String   @map("participant_email")
+  participantCpf   String   @map("participant_cpf")
+  songName         String   @map("song_name")
+  performers       String   @db.Text
+  musicComposer    String?  @map("music_composer")
+  lyricsComposer   String?  @map("lyrics_composer")
+  videoUrl         String?  @map("video_url")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("registrations")
 }
