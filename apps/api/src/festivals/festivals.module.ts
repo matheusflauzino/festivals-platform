@@ -44,5 +44,6 @@ import { AuditLogInterceptor } from '../common/interceptors/audit-log.intercepto
       useClass: PrismaGradeCriteriaRepository,
     },
   ],
+  exports: [FESTIVALS_REPOSITORY],
 })
 export class FestivalsModule {}
