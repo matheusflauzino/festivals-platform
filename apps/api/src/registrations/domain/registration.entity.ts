@@ -35,10 +35,14 @@ export class Registration {
 
   static create(input: CreateRegistrationInput): Registration {
     if (input.participantName.trim().length === 0) {
-      throw new RegistrationValidationError('participantName must not be empty');
+      throw new RegistrationValidationError(
+        'participantName must not be empty',
+      );
     }
     if (!/^\d{11}$/.test(input.participantCpf)) {
-      throw new RegistrationValidationError('participantCpf must be exactly 11 digits');
+      throw new RegistrationValidationError(
+        'participantCpf must be exactly 11 digits',
+      );
     }
     if (input.songName.trim().length === 0) {
       throw new RegistrationValidationError('songName must not be empty');

@@ -46,15 +46,15 @@ describe('Registration', () => {
   });
 
   it('rejects a whitespace-only songName', () => {
-    expect(() => Registration.create({ ...baseInput, songName: '   ' })).toThrow(
-      RegistrationValidationError,
-    );
+    expect(() =>
+      Registration.create({ ...baseInput, songName: '   ' }),
+    ).toThrow(RegistrationValidationError);
   });
 
   it('rejects a whitespace-only performers', () => {
-    expect(() => Registration.create({ ...baseInput, performers: '   ' })).toThrow(
-      RegistrationValidationError,
-    );
+    expect(() =>
+      Registration.create({ ...baseInput, performers: '   ' }),
+    ).toThrow(RegistrationValidationError);
   });
 
   it('rejects a participantCpf that is not exactly 11 digits', () => {

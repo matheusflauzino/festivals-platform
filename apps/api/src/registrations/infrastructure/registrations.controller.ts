@@ -36,7 +36,10 @@ import type { Registration } from '../domain/registration.entity';
 
 @Controller('tenants/:tenantSlug')
 @UseGuards(AdminAuthGuard)
-@UseFilters(InvalidFestivalStateExceptionFilter, RegistrationValidationExceptionFilter)
+@UseFilters(
+  InvalidFestivalStateExceptionFilter,
+  RegistrationValidationExceptionFilter,
+)
 export class RegistrationsController {
   constructor(
     private readonly findTenantBySlug: FindTenantBySlugUseCase,
@@ -59,7 +62,10 @@ export class RegistrationsController {
     return tenant;
   }
 
-  private toRegistrationDto(registration: Registration, festival: Festival | null) {
+  private toRegistrationDto(
+    registration: Registration,
+    festival: Festival | null,
+  ) {
     return {
       id: registration.id,
       festivalId: registration.festivalId,
@@ -101,7 +107,10 @@ export class RegistrationsController {
       ...body,
     });
     if (!registration) throw new NotFoundException('festival not found');
-    const festival = await this.festivalsRepository.findById(tenant.id, festivalId);
+    const festival = await this.festivalsRepository.findById(
+      tenant.id,
+      festivalId,
+    );
     return this.toRegistrationDto(registration, festival);
   }
 
@@ -112,20 +121,36 @@ export class RegistrationsController {
     @Req() request: RequestWithAdmin,
   ) {
     const tenant = await this.resolveTenantForAdmin(tenantSlug, request);
-    const registrations = await this.listFestivalRegistrations.execute(tenant.id, festivalId);
+    const registrations = await this.listFestivalRegistrations.execute(
+      tenant.id,
+      festivalId,
+    );
     if (!registrations) throw new NotFoundException('festival not found');
-    const festival = await this.festivalsRepository.findById(tenant.id, festivalId);
-    return registrations.map((registration) => this.toRegistrationDto(registration, festival));
+    const festival = await this.festivalsRepository.findById(
+      tenant.id,
+      festivalId,
+    );
+    return registrations.map((registration) =>
+      this.toRegistrationDto(registration, festival),
+    );
   }
 
   @Get('registrations')
-  async listAll(@Param('tenantSlug') tenantSlug: string, @Req() request: RequestWithAdmin) {
+  async listAll(
+    @Param('tenantSlug') tenantSlug: string,
+    @Req() request: RequestWithAdmin,
+  ) {
     const tenant = await this.resolveTenantForAdmin(tenantSlug, request);
     const registrations = await this.listRegistrations.execute(tenant.id);
     const festivals = await this.festivalsRepository.findAllByTenant(tenant.id);
-    const festivalById = new Map(festivals.map((festival) => [festival.id, festival]));
+    const festivalById = new Map(
+      festivals.map((festival) => [festival.id, festival]),
+    );
     return registrations.map((registration) =>
-      this.toRegistrationDto(registration, festivalById.get(registration.festivalId) ?? null),
+      this.toRegistrationDto(
+        registration,
+        festivalById.get(registration.festivalId) ?? null,
+      ),
     );
   }
 }

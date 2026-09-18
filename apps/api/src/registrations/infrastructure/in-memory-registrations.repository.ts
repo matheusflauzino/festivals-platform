@@ -15,7 +15,10 @@ export class InMemoryRegistrationsRepository implements RegistrationsRepositoryP
     );
   }
 
-  findAllByFestival(tenantId: string, festivalId: string): Promise<Registration[]> {
+  findAllByFestival(
+    tenantId: string,
+    festivalId: string,
+  ): Promise<Registration[]> {
     return Promise.resolve(
       [...this.registrations.values()].filter(
         (r) => r.tenantId === tenantId && r.festivalId === festivalId,

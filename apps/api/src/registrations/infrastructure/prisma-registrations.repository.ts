@@ -68,7 +68,10 @@ export class PrismaRegistrationsRepository
     return rows.map((row) => this.toDomain(row));
   }
 
-  async findAllByFestival(tenantId: string, festivalId: string): Promise<Registration[]> {
+  async findAllByFestival(
+    tenantId: string,
+    festivalId: string,
+  ): Promise<Registration[]> {
     const rows = await this.prisma.registration.findMany({
       where: this.tenantScoped(tenantId, { festivalId }),
       orderBy: { createdAt: 'desc' },

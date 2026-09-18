@@ -20,7 +20,10 @@ import { AuditLogInterceptor } from '../common/interceptors/audit-log.intercepto
     ListFestivalRegistrationsUseCase,
     RolesGuard,
     AuditLogInterceptor,
-    { provide: REGISTRATIONS_REPOSITORY, useClass: PrismaRegistrationsRepository },
+    {
+      provide: REGISTRATIONS_REPOSITORY,
+      useClass: PrismaRegistrationsRepository,
+    },
   ],
 })
 export class RegistrationsModule {}

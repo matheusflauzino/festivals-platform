@@ -58,7 +58,11 @@ describe('RegistrationsController (e2e)', () => {
     return (response.body as LoginResponseBody).accessToken;
   }
 
-  async function createOpenFestival(token: string, number: number, year: number) {
+  async function createOpenFestival(
+    token: string,
+    number: number,
+    year: number,
+  ) {
     const createResponse = await request(app.getHttpServer())
       .post(`/tenants/${tenantSlug}/festivals`)
       .set('Authorization', `Bearer ${token}`)
@@ -132,7 +136,9 @@ describe('RegistrationsController (e2e)', () => {
       .get(`/tenants/${tenantSlug}/festivals/${festival.id}/registrations`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
-    expect(byFestivalResponse.body as RegistrationResponseBody[]).toHaveLength(1);
+    expect(byFestivalResponse.body as RegistrationResponseBody[]).toHaveLength(
+      1,
+    );
 
     const allResponse = await request(app.getHttpServer())
       .get(`/tenants/${tenantSlug}/registrations`)
