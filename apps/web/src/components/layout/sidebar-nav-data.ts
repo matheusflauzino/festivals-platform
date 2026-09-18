@@ -42,7 +42,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Inscrições & Avaliação',
     items: [
-      { label: 'Inscrições', href: '/inscricoes', icon: ClipboardIcon, status: 'soon' },
+      { label: 'Inscrições', href: '/inscricoes', icon: ClipboardIcon, status: 'active' },
       { label: 'Classificação', href: '/classificacao', icon: TrendingUpIcon, status: 'soon' },
     ],
   },
