@@ -29,3 +29,6 @@ export type {
   CreateStageDto,
   CreateGradeCriterionDto,
 } from './festival.schema.js';
+
+export { createRegistrationSchema } from './registration.schema.js';
+export type { CreateRegistrationDto } from './registration.schema.js';
