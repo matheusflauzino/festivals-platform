@@ -28,12 +28,19 @@ export class CreateRegistrationUseCase {
     private readonly registrationsRepository: RegistrationsRepositoryPort,
   ) {}
 
-  async execute(input: CreateRegistrationUseCaseInput): Promise<Registration | null> {
-    const festival = await this.festivalsRepository.findById(input.tenantId, input.festivalId);
+  async execute(
+    input: CreateRegistrationUseCaseInput,
+  ): Promise<Registration | null> {
+    const festival = await this.festivalsRepository.findById(
+      input.tenantId,
+      input.festivalId,
+    );
     if (!festival) return null;
 
     if (!festival.isAcceptingRegistrations(new Date())) {
-      throw new InvalidFestivalStateError('festival is not currently accepting registrations');
+      throw new InvalidFestivalStateError(
+        'festival is not currently accepting registrations',
+      );
     }
 
     const registration = Registration.create(input);

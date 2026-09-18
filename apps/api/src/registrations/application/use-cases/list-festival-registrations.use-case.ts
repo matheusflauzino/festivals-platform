@@ -14,8 +14,14 @@ export class ListFestivalRegistrationsUseCase {
     private readonly registrationsRepository: RegistrationsRepositoryPort,
   ) {}
 
-  async execute(tenantId: string, festivalId: string): Promise<Registration[] | null> {
-    const festival = await this.festivalsRepository.findById(tenantId, festivalId);
+  async execute(
+    tenantId: string,
+    festivalId: string,
+  ): Promise<Registration[] | null> {
+    const festival = await this.festivalsRepository.findById(
+      tenantId,
+      festivalId,
+    );
     if (!festival) return null;
 
     return this.registrationsRepository.findAllByFestival(tenantId, festivalId);

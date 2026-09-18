@@ -40,11 +40,16 @@ describe('CreateRegistrationUseCase', () => {
     const festivalsRepository = new InMemoryFestivalsRepository();
     const registrationsRepository = new InMemoryRegistrationsRepository();
     const festival = (
-      await new CreateFestivalUseCase(festivalsRepository).execute(baseFestivalInput)
+      await new CreateFestivalUseCase(festivalsRepository).execute(
+        baseFestivalInput,
+      )
     ).publish();
     await festivalsRepository.save(festival);
 
-    const useCase = new CreateRegistrationUseCase(festivalsRepository, registrationsRepository);
+    const useCase = new CreateRegistrationUseCase(
+      festivalsRepository,
+      registrationsRepository,
+    );
     const registration = await useCase.execute({
       ...baseRegistrationInput,
       festivalId: festival.id,
@@ -58,11 +63,16 @@ describe('CreateRegistrationUseCase', () => {
     const festivalsRepository = new InMemoryFestivalsRepository();
     const registrationsRepository = new InMemoryRegistrationsRepository();
     const festival = (
-      await new CreateFestivalUseCase(festivalsRepository).execute(baseFestivalInput)
+      await new CreateFestivalUseCase(festivalsRepository).execute(
+        baseFestivalInput,
+      )
     ).publish();
     await festivalsRepository.save(festival);
 
-    const useCase = new CreateRegistrationUseCase(festivalsRepository, registrationsRepository);
+    const useCase = new CreateRegistrationUseCase(
+      festivalsRepository,
+      registrationsRepository,
+    );
     const registration = await useCase.execute({
       ...baseRegistrationInput,
       tenantId: 'tenant-2',
@@ -75,11 +85,14 @@ describe('CreateRegistrationUseCase', () => {
   it('rejects when the festival is still DRAFT', async () => {
     const festivalsRepository = new InMemoryFestivalsRepository();
     const registrationsRepository = new InMemoryRegistrationsRepository();
-    const festival = await new CreateFestivalUseCase(festivalsRepository).execute(
-      baseFestivalInput,
-    );
+    const festival = await new CreateFestivalUseCase(
+      festivalsRepository,
+    ).execute(baseFestivalInput);
 
-    const useCase = new CreateRegistrationUseCase(festivalsRepository, registrationsRepository);
+    const useCase = new CreateRegistrationUseCase(
+      festivalsRepository,
+      registrationsRepository,
+    );
     await expect(
       useCase.execute({ ...baseRegistrationInput, festivalId: festival.id }),
     ).rejects.toThrow(InvalidFestivalStateError);
@@ -89,13 +102,18 @@ describe('CreateRegistrationUseCase', () => {
     const festivalsRepository = new InMemoryFestivalsRepository();
     const registrationsRepository = new InMemoryRegistrationsRepository();
     const festival = (
-      await new CreateFestivalUseCase(festivalsRepository).execute(baseFestivalInput)
+      await new CreateFestivalUseCase(festivalsRepository).execute(
+        baseFestivalInput,
+      )
     )
       .publish()
       .close();
     await festivalsRepository.save(festival);
 
-    const useCase = new CreateRegistrationUseCase(festivalsRepository, registrationsRepository);
+    const useCase = new CreateRegistrationUseCase(
+      festivalsRepository,
+      registrationsRepository,
+    );
     await expect(
       useCase.execute({ ...baseRegistrationInput, festivalId: festival.id }),
     ).rejects.toThrow(InvalidFestivalStateError);
