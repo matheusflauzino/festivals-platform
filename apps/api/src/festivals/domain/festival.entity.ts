@@ -204,6 +204,14 @@ export class Festival {
     });
   }
 
+  isAcceptingRegistrations(now: Date): boolean {
+    return (
+      this.props.status === 'OPEN' &&
+      now.getTime() >= this.props.registrationBegin.getTime() &&
+      now.getTime() <= this.props.registrationEnd.getTime()
+    );
+  }
+
   get id(): string {
     return this.props.id;
   }

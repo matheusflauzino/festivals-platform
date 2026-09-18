@@ -186,4 +186,34 @@ describe('Festival', () => {
     const open = draft.publish();
     expect(() => open.updateDetails(baseInput)).not.toThrow();
   });
+
+  it('accepts registrations when OPEN and within the registration window', () => {
+    const festival = Festival.create(baseInput).publish();
+    const now = new Date('2026-02-01T00:00:00Z');
+    expect(festival.isAcceptingRegistrations(now)).toBe(true);
+  });
+
+  it('does not accept registrations when still DRAFT', () => {
+    const festival = Festival.create(baseInput);
+    const now = new Date('2026-02-01T00:00:00Z');
+    expect(festival.isAcceptingRegistrations(now)).toBe(false);
+  });
+
+  it('does not accept registrations when CLOSED', () => {
+    const festival = Festival.create(baseInput).publish().close();
+    const now = new Date('2026-02-01T00:00:00Z');
+    expect(festival.isAcceptingRegistrations(now)).toBe(false);
+  });
+
+  it('does not accept registrations before registrationBegin', () => {
+    const festival = Festival.create(baseInput).publish();
+    const now = new Date('2025-12-31T00:00:00Z');
+    expect(festival.isAcceptingRegistrations(now)).toBe(false);
+  });
+
+  it('does not accept registrations after registrationEnd', () => {
+    const festival = Festival.create(baseInput).publish();
+    const now = new Date('2026-03-02T00:00:00Z');
+    expect(festival.isAcceptingRegistrations(now)).toBe(false);
+  });
 });
