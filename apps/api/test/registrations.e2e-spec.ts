@@ -148,6 +148,29 @@ describe('RegistrationsController (e2e)', () => {
     expect(all.some((r) => r.id === registration.id)).toBe(true);
   });
 
+  it('persists text fields at the 255-character contract limit', async () => {
+    const token = await loginAsOrganizer();
+    const festival = await createOpenFestival(token, 95, 2095);
+    const atLimit = 'x'.repeat(255);
+
+    const createResponse = await request(app.getHttpServer())
+      .post(`/tenants/${tenantSlug}/festivals/${festival.id}/registrations`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        participantName: atLimit,
+        participantEmail: 'limit@example.com',
+        participantCpf: '86359899531',
+        songName: atLimit,
+        performers: 'Someone: Voice',
+        musicComposer: atLimit,
+        lyricsComposer: atLimit,
+      })
+      .expect(201);
+    const registration = createResponse.body as RegistrationResponseBody;
+    expect(registration.participantName).toBe(atLimit);
+    expect(registration.songName).toBe(atLimit);
+  });
+
   it('allows the same participant to submit a second song to the same festival', async () => {
     const token = await loginAsOrganizer();
     const festival = await createOpenFestival(token, 91, 2091);

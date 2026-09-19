@@ -55,6 +55,26 @@ describe('createRegistrationSchema', () => {
     ).toBe(false);
   });
 
+  it('accepts text fields at the 255-character limit and rejects 256', () => {
+    const atLimit = 'a'.repeat(255);
+    const overLimit = 'a'.repeat(256);
+    for (const field of ['participantName', 'songName', 'musicComposer', 'lyricsComposer']) {
+      expect(
+        createRegistrationSchema.safeParse({ ...validPayload, [field]: atLimit }).success,
+      ).toBe(true);
+      expect(
+        createRegistrationSchema.safeParse({ ...validPayload, [field]: overLimit }).success,
+      ).toBe(false);
+    }
+  });
+
+  it('rejects a videoUrl longer than 2048 characters', () => {
+    const longUrl = `https://example.com/${'v'.repeat(2048)}`;
+    expect(
+      createRegistrationSchema.safeParse({ ...validPayload, videoUrl: longUrl }).success,
+    ).toBe(false);
+  });
+
   it('accepts a null videoUrl', () => {
     expect(createRegistrationSchema.safeParse({ ...validPayload, videoUrl: null }).success).toBe(
       true,

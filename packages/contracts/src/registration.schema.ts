@@ -8,7 +8,7 @@ export const createRegistrationSchema = z.object({
   performers: z.string().trim().min(1).max(2000),
   musicComposer: z.string().trim().max(255).nullable().optional(),
   lyricsComposer: z.string().trim().max(255).nullable().optional(),
-  videoUrl: z.string().url().nullable().optional(),
+  videoUrl: z.string().url().max(2048).nullable().optional(),
 });
 
 export type CreateRegistrationDto = z.infer<typeof createRegistrationSchema>;
